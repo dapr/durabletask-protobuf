@@ -7,14 +7,13 @@ package durabletask.protos.backend.v1;
 
 option csharp_namespace = "Microsoft.DurableTask.Protobuf";
 option java_package = "com.microsoft.durabletask.implementation.protobuf";
-option go_package = "github.com/microsoft/durabletask-protobuf/internal/protos";
+option go_package = "/api/protos";
 
 import "orchestrator_service.proto";
 
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
-import "google/protobuf/empty.proto";
 
 // gRPC service used by Durable Task Framework (DTFx) backend implementations.
 // The RPCs in this service are used by DTFx backends to manage orchestration state.
@@ -168,4 +167,28 @@ message PingRequest {
 // Response payload for ping operations.
 message PingResponse {
 	// No fields
+}
+
+message WorkflowState {
+  repeated HistoryEvent inbox = 1;
+  repeated HistoryEvent history = 2;
+  google.protobuf.StringValue customStatus = 3;
+  uint64 generation = 4;
+}
+
+message CreateWorkflowInstanceRequest {
+  HistoryEvent startEvent = 1;
+  optional OrchestrationIdReusePolicy policy = 2;
+}
+
+message OrchestrationMetadata {
+  string instanceId = 1;
+  string name = 2;
+  OrchestrationStatus runtimeStatus = 3;
+  google.protobuf.Timestamp createdAt = 4;
+  google.protobuf.Timestamp lastUpdatedAt = 5;
+  google.protobuf.StringValue input = 6;
+  google.protobuf.StringValue output = 7;
+  google.protobuf.StringValue customStatus = 8;
+  TaskFailureDetails failureDetails = 9;
 }
