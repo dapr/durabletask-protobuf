@@ -192,3 +192,14 @@ message OrchestrationMetadata {
   google.protobuf.StringValue customStatus = 8;
   TaskFailureDetails failureDetails = 9;
 }
+
+message WorkflowStateMetadata {
+  uint64 inboxLength = 1;
+  uint64 historyLength = 2;
+  uint64 generation = 3;
+}
+
+message DurableTimer {
+  HistoryEvent timerEvent = 1;
+  uint64 generation = 2;
+}
