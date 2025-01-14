@@ -1,0 +1,41 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.backend.v1;
+
+option csharp_namespace = "Microsoft.DurableTask.Protobuf";
+option java_package = "com.microsoft.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "orchestrator_service.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// OrchestrationRuntimeState holds the current state for an orchestration.
+message OrchestrationRuntimeState {
+  string instanceId = 1;
+  repeated HistoryEvent newEvents = 2;
+  repeated HistoryEvent oldEvents = 3;
+  repeated HistoryEvent pendingTasks = 4;
+  repeated HistoryEvent pendingTimers = 5;
+  repeated OrchestrationRuntimeStateMessage pendingMessages = 6;
+
+  ExecutionStartedEvent startEvent = 7;
+  ExecutionCompletedEvent completedEvent = 8;
+  google.protobuf.Timestamp createdTime = 9;
+  google.protobuf.Timestamp lastUpdatedTime = 10;
+  google.protobuf.Timestamp completedTime = 11;
+  bool continuedAsNew = 12;
+  bool isSuspended = 13;
+
+  google.protobuf.StringValue customStatus = 14;
+}
+
+// OrchestrationRuntimeStateMessage holds an OrchestratorMessage and the target instance ID.
+message OrchestrationRuntimeStateMessage {
+  HistoryEvent historyEvent = 1;
+  string TargetInstanceID = 2;
+}
