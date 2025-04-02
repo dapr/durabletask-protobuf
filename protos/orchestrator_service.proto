@@ -31,6 +31,7 @@ message ActivityResponse {
     int32 taskId = 2;
     google.protobuf.StringValue result = 3;
     TaskFailureDetails failureDetails = 4;
+    string completionToken = 5;
 }
 
 message TaskFailureDetails {
@@ -74,6 +75,7 @@ message ExecutionStartedEvent {
     google.protobuf.Timestamp scheduledStartTimestamp = 6;
     TraceContext parentTraceContext = 7;
     google.protobuf.StringValue orchestrationSpanID = 8;
+    map<string, string> tags = 9;
 }
 
 message ExecutionCompletedEvent {
@@ -170,6 +172,51 @@ message ExecutionResumedEvent {
     google.protobuf.StringValue input = 1;
 }
 
+message EntityOperationSignaledEvent {
+    string requestId = 1;
+    string operation = 2;
+    google.protobuf.Timestamp scheduledTime = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.StringValue targetInstanceId = 5; // used only within histories, null in messages
+}
+
+message EntityOperationCalledEvent {
+    string requestId = 1;
+    string operation = 2;
+    google.protobuf.Timestamp scheduledTime = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.StringValue parentInstanceId = 5;  // used only within messages, null in histories
+    google.protobuf.StringValue parentExecutionId = 6;  // used only within messages, null in histories
+    google.protobuf.StringValue targetInstanceId = 7; // used only within histories, null in messages
+}
+
+message EntityLockRequestedEvent {
+    string criticalSectionId = 1;  
+    repeated string lockSet = 2;
+    int32 position = 3;
+    google.protobuf.StringValue parentInstanceId = 4; // used only within messages, null in histories 
+}
+
+message EntityOperationCompletedEvent {
+    string requestId = 1;
+    google.protobuf.StringValue output = 2;
+}
+
+message EntityOperationFailedEvent {
+    string requestId = 1;
+    TaskFailureDetails failureDetails = 2;
+}
+
+message EntityUnlockSentEvent {
+    string criticalSectionId = 1;
+    google.protobuf.StringValue parentInstanceId = 2;  // used only within messages, null in histories 
+    google.protobuf.StringValue targetInstanceId = 3;  // used only within histories, null in messages
+}
+
+message EntityLockGrantedEvent {
+    string criticalSectionId = 1;
+}
+ 
 message HistoryEvent {
     int32 eventId = 1;
     google.protobuf.Timestamp timestamp = 2;
@@ -194,6 +241,13 @@ message HistoryEvent {
         ContinueAsNewEvent continueAsNew = 20;
         ExecutionSuspendedEvent executionSuspended = 21;
         ExecutionResumedEvent executionResumed = 22;
+        EntityOperationSignaledEvent entityOperationSignaled = 23;
+        EntityOperationCalledEvent entityOperationCalled = 24;
+        EntityOperationCompletedEvent entityOperationCompleted = 25; 
+        EntityOperationFailedEvent entityOperationFailed = 26; 
+        EntityLockRequestedEvent entityLockRequested = 27;
+        EntityLockGrantedEvent entityLockGranted = 28;
+        EntityUnlockSentEvent entityUnlockSent = 29;
     }
 }
 
@@ -235,6 +289,15 @@ message TerminateOrchestrationAction {
     bool recurse = 3;
 }
 
+message SendEntityMessageAction {
+    oneof EntityMessageType {
+        EntityOperationSignaledEvent entityOperationSignaled = 1;
+        EntityOperationCalledEvent entityOperationCalled = 2;
+        EntityLockRequestedEvent entityLockRequested = 3;
+        EntityUnlockSentEvent entityUnlockSent = 4;
+    }
+}
+
 message OrchestratorAction {
     int32 id = 1;
     oneof orchestratorActionType {
@@ -244,6 +307,7 @@ message OrchestratorAction {
         SendEventAction sendEvent = 5;
         CompleteOrchestrationAction completeOrchestration = 6;
         TerminateOrchestrationAction terminateOrchestration = 7;
+        SendEntityMessageAction sendEntityMessage = 8;
     }
 }
 
@@ -253,12 +317,18 @@ message OrchestratorRequest {
     repeated HistoryEvent pastEvents = 3;
     repeated HistoryEvent newEvents = 4;
     OrchestratorEntityParameters entityParameters = 5;
+    bool requiresHistoryStreaming = 6;
 }
 
 message OrchestratorResponse {
     string instanceId = 1;
     repeated OrchestratorAction actions = 2;
     google.protobuf.StringValue customStatus = 3;
+    string completionToken = 4;
+
+    // The number of work item events that were processed by the orchestrator.
+    // This field is optional. If not set, the service should assume that the orchestrator processed all events.
+    google.protobuf.Int32Value numEventsProcessed = 5;
 }
 
 message CreateInstanceRequest {
@@ -270,17 +340,12 @@ message CreateInstanceRequest {
     OrchestrationIdReusePolicy orchestrationIdReusePolicy = 6;
     google.protobuf.StringValue executionId = 7;
     map<string, string> tags = 8;
+    TraceContext parentTraceContext = 9;
 }
 
 message OrchestrationIdReusePolicy {
-    repeated OrchestrationStatus operationStatus = 1;
-    CreateOrchestrationAction action = 2;
-}
-
-enum CreateOrchestrationAction {
-    ERROR = 0;
-    IGNORE = 1;
-    TERMINATE = 2;
+    repeated OrchestrationStatus replaceableStatus = 1;
+    reserved 2;
 }
 
 message CreateInstanceResponse {
@@ -321,6 +386,7 @@ message OrchestrationState {
     google.protobuf.StringValue executionId = 12;
     google.protobuf.Timestamp completedTimestamp = 13;
     google.protobuf.StringValue parentInstanceId = 14;
+    map<string, string> tags = 15;
 }
 
 message RaiseEventRequest {
@@ -397,6 +463,7 @@ message PurgeInstanceFilter {
 
 message PurgeInstancesResponse {
     int32 deletedInstanceCount = 1;
+    google.protobuf.BoolValue isComplete = 2;
 }
 
 message CreateTaskHubRequest {
@@ -427,20 +494,17 @@ message SignalEntityResponse {
      // no payload
 }
 
-message GetEntityRequest
-{
+message GetEntityRequest {
     string instanceId = 1;
     bool includeState = 2;
 }
 
-message GetEntityResponse
-{
+message GetEntityResponse {
     bool exists = 1;
     EntityMetadata entity = 2;
 }
 
-message EntityQuery
-{
+message EntityQuery {
     google.protobuf.StringValue instanceIdStartsWith = 1;
     google.protobuf.Timestamp lastModifiedFrom = 2;
     google.protobuf.Timestamp lastModifiedTo = 3;
@@ -450,19 +514,16 @@ message EntityQuery
     google.protobuf.StringValue continuationToken = 7;
 }
 
-message QueryEntitiesRequest
-{
+message QueryEntitiesRequest {
     EntityQuery query = 1;
 }
 
-message QueryEntitiesResponse
-{
+message QueryEntitiesResponse {
     repeated EntityMetadata entities = 1;
     google.protobuf.StringValue continuationToken = 2;
 }
 
-message EntityMetadata
-{
+message EntityMetadata {
     string instanceId = 1;
     google.protobuf.Timestamp lastModifiedTime = 2;
     int32 backlogQueueSize = 3;
@@ -470,22 +531,19 @@ message EntityMetadata
     google.protobuf.StringValue serializedState = 5;
 }
 
-message CleanEntityStorageRequest
-{
+message CleanEntityStorageRequest {
     google.protobuf.StringValue continuationToken = 1;
     bool removeEmptyEntities = 2;
     bool releaseOrphanedLocks = 3;
 }
 
-message CleanEntityStorageResponse
-{
+message CleanEntityStorageResponse {
     google.protobuf.StringValue continuationToken = 1;
     int32 emptyEntitiesRemoved = 2;
     int32 orphanedLocksReleased = 3;
 }
 
-message OrchestratorEntityParameters
-{
+message OrchestratorEntityParameters {
     google.protobuf.Duration entityMessageReorderWindow = 1;
 }
 
@@ -500,6 +558,15 @@ message EntityBatchResult {
     repeated OperationAction actions = 2;
     google.protobuf.StringValue entityState = 3;
     TaskFailureDetails failureDetails = 4;
+    string completionToken = 5;
+    repeated OperationInfo operationInfos = 6; // used only with DTS
+}
+
+message EntityRequest {
+    string instanceId = 1;
+    string executionId = 2;
+    google.protobuf.StringValue entityState = 3; // null if entity does not exist
+    repeated HistoryEvent operationRequests = 4;
 }
 
 message OperationRequest {
@@ -513,6 +580,11 @@ message OperationResult {
         OperationResultSuccess success = 1;
         OperationResultFailure failure = 2;
     }
+}
+
+message OperationInfo {
+    string requestId = 1;
+    OrchestrationInstance responseDestination = 2; // null for signals
 }
 
 message OperationResultSuccess {
@@ -544,6 +616,30 @@ message StartNewOrchestrationAction {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     google.protobuf.Timestamp scheduledTime = 5;
+}
+
+message AbandonActivityTaskRequest {
+    string completionToken = 1;
+}
+
+message AbandonActivityTaskResponse {
+    // Empty.
+}
+
+message AbandonOrchestrationTaskRequest {
+    string completionToken = 1;
+}
+
+message AbandonOrchestrationTaskResponse {
+    // Empty.
+}
+
+message AbandonEntityTaskRequest {
+    string completionToken = 1;
+}
+
+message AbandonEntityTaskResponse {
+    // Empty.
 }
 
 service TaskHubSidecarService {
@@ -587,6 +683,9 @@ service TaskHubSidecarService {
     rpc CompleteOrchestratorTask(OrchestratorResponse) returns (CompleteTaskResponse);
     rpc CompleteEntityTask(EntityBatchResult) returns (CompleteTaskResponse);
 
+    // Gets the history of an orchestration instance as a stream of events.
+    rpc StreamInstanceHistory(StreamInstanceHistoryRequest) returns (stream HistoryChunk);
+
     // Deletes and Creates the necessary resources for the orchestration service and the instance store
     rpc CreateTaskHub(CreateTaskHubRequest) returns (CreateTaskHubResponse);
 
@@ -604,18 +703,42 @@ service TaskHubSidecarService {
 
     // clean entity storage
     rpc CleanEntityStorage(CleanEntityStorageRequest) returns (CleanEntityStorageResponse);
+
+    // Abandons a single work item
+    rpc AbandonTaskActivityWorkItem(AbandonActivityTaskRequest) returns (AbandonActivityTaskResponse);
+
+    // Abandon an orchestration work item
+    rpc AbandonTaskOrchestratorWorkItem(AbandonOrchestrationTaskRequest) returns (AbandonOrchestrationTaskResponse);
+
+    // Abandon an entity work item
+    rpc AbandonTaskEntityWorkItem(AbandonEntityTaskRequest) returns (AbandonEntityTaskResponse);
 }
 
 message GetWorkItemsRequest {
-    // No parameters currently
+    int32 maxConcurrentOrchestrationWorkItems = 1;
+    int32 maxConcurrentActivityWorkItems = 2;
+    int32 maxConcurrentEntityWorkItems = 3;
+
+    repeated WorkerCapability capabilities = 10;
+}
+
+enum WorkerCapability {
+    WORKER_CAPABILITY_UNSPECIFIED = 0;
+
+    // Indicates that the worker is capable of streaming instance history as a more optimized
+    // alternative to receiving the full history embedded in the orchestrator work-item.
+    // When set, the service may return work items without any history events as an optimization.
+    // It is strongly recommended that all SDKs support this capability.
+    WORKER_CAPABILITY_HISTORY_STREAMING = 1;
 }
 
 message WorkItem {
     oneof request {
         OrchestratorRequest orchestratorRequest = 1;
         ActivityRequest activityRequest = 2;
-        EntityBatchRequest entityRequest = 3;
+        EntityBatchRequest entityRequest = 3; // (older) used by orchestration services implementations
         HealthPing healthPing = 4;
+        EntityRequest entityRequestV2 = 5; // (newer) used by backend service implementations
     }
     string completionToken = 10;
 }
@@ -626,4 +749,16 @@ message CompleteTaskResponse {
 
 message HealthPing {
 	// No payload
+}
+
+message StreamInstanceHistoryRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+
+    // When set to true, the service may return a more optimized response suitable for workers.
+    bool forWorkItemProcessing = 3;
+}
+
+message HistoryChunk {
+    repeated HistoryEvent events = 1;
 }
