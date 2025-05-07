@@ -785,8 +785,8 @@ message RerunWorkflowFromEventRequest {
   uint32 eventID = 2;
 
   // newInstanceID is the new instance ID to use for the new workflow instance.
-  // Not optional, and must not be the same ID.
-  string newInstanceID = 3;
+  // If not given, a random instance ID will be given.
+  optional string newInstanceID = 3;
 
   // input can optionally given to give the new instance a different input to
   // the next Activity event.
