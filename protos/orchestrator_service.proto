@@ -106,7 +106,7 @@ message TaskScheduledEvent {
 message TaskCompletedEvent {
     int32 taskScheduledId = 1;
     google.protobuf.StringValue result = 2;
-    string taskExecutionId =3;
+    string taskExecutionId = 3;
 }
 
 message TaskFailedEvent {
