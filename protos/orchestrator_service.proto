@@ -112,7 +112,7 @@ message TaskCompletedEvent {
 message TaskFailedEvent {
     int32 taskScheduledId = 1;
     TaskFailureDetails failureDetails = 2;
-    string taskExecutionId =3;
+    string taskExecutionId = 3;
 }
 
 message SubOrchestrationInstanceCreatedEvent {
