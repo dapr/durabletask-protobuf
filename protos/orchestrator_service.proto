@@ -14,7 +14,7 @@ import "google/protobuf/empty.proto";
 
 message TaskRouter {
     string source = 1; // orchestrationAppID
-    string target = 2; // appID
+    optional string target = 2; // appID
 }
 
 message OrchestrationInstance {
