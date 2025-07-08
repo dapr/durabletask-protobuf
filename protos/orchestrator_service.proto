@@ -64,6 +64,7 @@ message ParentInstanceInfo {
     google.protobuf.StringValue name = 2;
     google.protobuf.StringValue version = 3;
     OrchestrationInstance orchestrationInstance = 4;
+    optional google.protobuf.StringValue appId = 5;
 }
 
 message TraceContext {
