@@ -17,6 +17,15 @@ message TaskRouter {
     optional string targetAppID = 2;
 }
 
+message Version {
+    string name = 1;
+    uint32 number = 2;
+}
+
+message Patches {
+    repeated string patches = 1;
+}
+
 message OrchestrationInstance {
     string instanceId = 1;
     google.protobuf.StringValue executionId = 2;
@@ -166,7 +175,8 @@ message OrchestratorStartedEvent {
 }
 
 message OrchestratorCompletedEvent {
-    // No payload data
+    optional string workflowTypeName = 1;
+    optional Patches patches = 2;
 }
 
 message EventSentEvent {
@@ -364,6 +374,8 @@ message OrchestratorResponse {
     // The number of work item events that were processed by the orchestrator.
     // This field is optional. If not set, the service should assume that the orchestrator processed all events.
     google.protobuf.Int32Value numEventsProcessed = 5;
+
+    optional Patches patches = 6;
 }
 
 message CreateInstanceRequest {
