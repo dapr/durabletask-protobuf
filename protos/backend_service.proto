@@ -78,6 +78,9 @@ service BackendService {
 
     // Returns the current metrics for the backend service.
     rpc GetMetrics (GetMetricsRequest) returns (GetMetricsResponse);
+
+    rpc ListInstanceIDs (ListInstanceIDsRequest) returns (ListInstanceIDsResponse);
+    rpc GetInstanceHistory (GetInstanceHistoryRequest) returns (GetInstanceHistoryResponse);
 }
 
 // Request payload for adding new orchestration events.
