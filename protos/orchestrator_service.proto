@@ -477,6 +477,17 @@ message PurgeInstancesRequest {
         PurgeInstanceFilter purgeInstanceFilter = 2;
     }
     bool recursive = 3;
+
+    // force will force a purge of a workflow, regardless of its current
+    // runtime state, or whether an active worker can process it, the backend
+    // will attempt to delete it anyway. This neccessarily means the purging is
+    // executed out side of the workflow state machine, and therefore, can lead
+    // to corrupt state or broken workflow execution. Usage of this should
+    // _only_ be used when the client knows the workflow is not being currently
+    // processed. It is highly recommended to avoid using this flag unless
+    // absolutely necessary.
+    // Defaults to false.
+    optional bool force = 4;
 }
 
 message PurgeInstanceFilter {
