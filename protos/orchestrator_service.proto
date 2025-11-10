@@ -171,12 +171,12 @@ message TimerFiredEvent {
 }
 
 message OrchestratorStartedEvent {
-    // No payload data
+    optional string workflowTypeName = 1;
+    optional Patches patches = 2;
 }
 
 message OrchestratorCompletedEvent {
-    optional string workflowTypeName = 1;
-    optional Patches patches = 2;
+    // No payload data
 }
 
 message EventSentEvent {
