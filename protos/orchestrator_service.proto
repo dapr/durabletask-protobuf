@@ -17,11 +17,6 @@ message TaskRouter {
     optional string targetAppID = 2;
 }
 
-message Version {
-    string name = 1;
-    uint32 number = 2;
-}
-
 message Patches {
     repeated string patches = 1;
 }
@@ -66,6 +61,7 @@ enum OrchestrationStatus {
     ORCHESTRATION_STATUS_TERMINATED = 5;
     ORCHESTRATION_STATUS_PENDING = 6;
     ORCHESTRATION_STATUS_SUSPENDED = 7;
+    ORCHESTRATION_STATUS_VERSION_PENDING = 8;
 }
 
 message ParentInstanceInfo {
@@ -210,6 +206,10 @@ message ExecutionResumedEvent {
     google.protobuf.StringValue input = 1;
 }
 
+message ExecutionVersionPendingEvent {
+    // No payload data
+}
+
 message EntityOperationSignaledEvent {
     string requestId = 1;
     string operation = 2;
@@ -286,6 +286,7 @@ message HistoryEvent {
         EntityLockRequestedEvent entityLockRequested = 27;
         EntityLockGrantedEvent entityLockGranted = 28;
         EntityUnlockSentEvent entityUnlockSent = 29;
+        ExecutionVersionPendingEvent executionVersionPending = 31;
     }
     optional TaskRouter router = 30;
 }
@@ -375,7 +376,9 @@ message OrchestratorResponse {
     // This field is optional. If not set, the service should assume that the orchestrator processed all events.
     google.protobuf.Int32Value numEventsProcessed = 5;
 
-    optional Patches patches = 6;
+    optional string workflowTypeName = 6;
+    optional Patches patches = 7;
+    bool patchMismatch = 8;
 }
 
 message CreateInstanceRequest {
