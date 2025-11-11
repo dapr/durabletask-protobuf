@@ -66,6 +66,9 @@ enum OrchestrationStatus {
     ORCHESTRATION_STATUS_TERMINATED = 5;
     ORCHESTRATION_STATUS_PENDING = 6;
     ORCHESTRATION_STATUS_SUSPENDED = 7;
+
+    // The orchestration is frozen until an actor dissemination event triggers
+    ORCHESTRATION_STATUS_FROZEN = 8;
 }
 
 message ParentInstanceInfo {
@@ -359,6 +362,7 @@ message OrchestratorResponse {
     google.protobuf.Int32Value numEventsProcessed = 5;
 
     optional Patches patches = 6;
+    bool patchMismatch = 7;
 }
 
 message CreateInstanceRequest {
