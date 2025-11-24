@@ -67,6 +67,15 @@ message ParentInstanceInfo {
     optional string appID = 5;
 }
 
+// RerunParentInstanceInfo is used to indicate that this orchestration was
+// started as part of a rerun operation. Contains information about the parent
+// orchestration instance which was rerun.
+message RerunParentInstanceInfo {
+  // instanceID is the orchestration instance ID this orchestration has been
+  // rerun from.
+  string instanceID = 1;
+}
+
 message TraceContext {
     string traceParent = 1;
     string spanID = 2 [deprecated=true];
@@ -102,6 +111,10 @@ message TaskScheduledEvent {
     google.protobuf.StringValue input = 3;
     TraceContext parentTraceContext = 4;
     string taskExecutionId = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
 message TaskCompletedEvent {
@@ -137,6 +150,10 @@ message SubOrchestrationInstanceFailedEvent {
 message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
 }
 
 message TimerFiredEvent {
