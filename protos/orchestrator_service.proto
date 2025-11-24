@@ -112,8 +112,8 @@ message TaskScheduledEvent {
     TraceContext parentTraceContext = 4;
     string taskExecutionId = 5;
 
-    // If defined, indicates that this task was scheduled as part of a rerun
-    // operation.
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
@@ -151,8 +151,8 @@ message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
 
-    // If defined, indicates that this task was scheduled as part of a rerun
-    // operation.
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
 }
 
