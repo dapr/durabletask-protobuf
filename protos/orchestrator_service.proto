@@ -162,7 +162,8 @@ message TimerFiredEvent {
 }
 
 message OrchestratorStartedEvent {
-    // No payload data
+    // The name of the specific workflow type executed
+    optional string workflowTypeName = 1;
 }
 
 message OrchestratorCompletedEvent {
