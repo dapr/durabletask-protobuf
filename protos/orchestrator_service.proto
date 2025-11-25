@@ -161,9 +161,15 @@ message TimerFiredEvent {
     int32 timerId = 2;
 }
 
+// Contains values used to identify which workflow is executed as part of a versioned operation. 
+message WorkflowVersion {
+    // The name of the workflow executed as part of this version.
+    string name = 1;
+}
+
 message OrchestratorStartedEvent {
-    // The name of the specific workflow type executed
-    optional string workflowTypeName = 1;
+    // Optionally identifies the workflow executed as part of a versioned operation. 
+    optional WorkflowVersion Version = 1;
 }
 
 message OrchestratorCompletedEvent {
