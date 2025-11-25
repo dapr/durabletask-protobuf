@@ -42,7 +42,7 @@ message OrchestrationRuntimeState {
   bool isSuspended = 13;
 
   google.protobuf.StringValue customStatus = 14;
-  bool isVersionPending = 15;
+  bool isPendingVersion = 15;
 }
 
 // OrchestrationRuntimeStateMessage holds an OrchestratorMessage and the target instance ID.
