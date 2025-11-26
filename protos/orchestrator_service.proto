@@ -167,7 +167,7 @@ message TimerFiredEvent {
 }
 
 message OrchestratorStartedEvent {
-    optional Patches patches = 2;
+    optional Patches patches = 1;
 }
 
 message OrchestratorCompletedEvent {
@@ -365,6 +365,11 @@ message OrchestratorRequest {
     optional TaskRouter router = 7;
 }
 
+message OrchestratorResponseVersioningInfo {
+    optional Patches patches = 1;
+    bool patchMismatch = 2;
+}
+
 message OrchestratorResponse {
     string instanceId = 1;
     repeated OrchestratorAction actions = 2;
@@ -375,8 +380,7 @@ message OrchestratorResponse {
     // This field is optional. If not set, the service should assume that the orchestrator processed all events.
     google.protobuf.Int32Value numEventsProcessed = 5;
 
-    optional Patches patches = 7;
-    bool patchMismatch = 8;
+    optional OrchestratorResponseVersioningInfo versioningInfo = 6;
 }
 
 message CreateInstanceRequest {
