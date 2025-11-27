@@ -17,6 +17,10 @@ message TaskRouter {
     optional string targetAppID = 2;
 }
 
+message OrchestrationVersion {
+    repeated string patches = 1;
+}
+
 message OrchestrationInstance {
     string instanceId = 1;
     google.protobuf.StringValue executionId = 2;
@@ -57,6 +61,7 @@ enum OrchestrationStatus {
     ORCHESTRATION_STATUS_TERMINATED = 5;
     ORCHESTRATION_STATUS_PENDING = 6;
     ORCHESTRATION_STATUS_SUSPENDED = 7;
+    ORCHESTRATION_STATUS_STALLED = 8;
 }
 
 message ParentInstanceInfo {
@@ -162,7 +167,7 @@ message TimerFiredEvent {
 }
 
 message OrchestratorStartedEvent {
-    // No payload data
+    optional OrchestrationVersion version = 1;
 }
 
 message OrchestratorCompletedEvent {
@@ -198,6 +203,10 @@ message ExecutionSuspendedEvent {
 
 message ExecutionResumedEvent {
     google.protobuf.StringValue input = 1;
+}
+
+message ExecutionStalledEvent {
+    StalledReason reason = 1;
 }
 
 message EntityOperationSignaledEvent {
@@ -276,6 +285,7 @@ message HistoryEvent {
         EntityLockRequestedEvent entityLockRequested = 27;
         EntityLockGrantedEvent entityLockGranted = 28;
         EntityUnlockSentEvent entityUnlockSent = 29;
+        ExecutionStalledEvent executionStalled = 31;
     }
     optional TaskRouter router = 30;
 }
@@ -364,6 +374,8 @@ message OrchestratorResponse {
     // The number of work item events that were processed by the orchestrator.
     // This field is optional. If not set, the service should assume that the orchestrator processed all events.
     google.protobuf.Int32Value numEventsProcessed = 5;
+
+    optional OrchestrationVersion version = 6;
 }
 
 message CreateInstanceRequest {
