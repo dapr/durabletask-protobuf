@@ -207,6 +207,7 @@ message ExecutionResumedEvent {
 
 message ExecutionStalledEvent {
     StalledReason reason = 1;
+    string description = 2;
 }
 
 message EntityOperationSignaledEvent {
