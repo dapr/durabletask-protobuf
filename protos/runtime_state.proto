@@ -24,10 +24,6 @@ import "orchestrator_service.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-enum StalledReason {
-  PATCH_MISMATCH = 0;
-}
-
 message RuntimeStateStalled {
   StalledReason reason = 1;
   optional string description = 2;
