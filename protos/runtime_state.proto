@@ -30,7 +30,7 @@ enum StalledReason {
 
 message RuntimeStateStalled {
   StalledReason reason = 1;
-  string description = 2;
+  optional string description = 2;
 }
 
 // OrchestrationRuntimeState holds the current state for an orchestration.
