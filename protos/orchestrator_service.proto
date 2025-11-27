@@ -12,6 +12,10 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
+enum StalledReason {
+    PATCH_MISMATCH = 0;
+}
+
 message TaskRouter {
     string sourceAppID = 1;
     optional string targetAppID = 2;
@@ -207,6 +211,7 @@ message ExecutionResumedEvent {
 
 message ExecutionStalledEvent {
     StalledReason reason = 1;
+    optional string description = 2;
 }
 
 message EntityOperationSignaledEvent {
