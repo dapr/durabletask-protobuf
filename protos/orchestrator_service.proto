@@ -23,6 +23,9 @@ message TaskRouter {
 
 message OrchestrationVersion {
     repeated string patches = 1;
+    
+    // The name of the executed workflow
+    optional string workflowName = 2; 
 }
 
 message OrchestrationInstance {
