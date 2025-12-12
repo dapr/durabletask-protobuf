@@ -148,6 +148,10 @@ message SubOrchestrationInstanceCreatedEvent {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     TraceContext parentTraceContext = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
 message SubOrchestrationInstanceCompletedEvent {
@@ -865,6 +869,11 @@ message RerunWorkflowFromEventRequest {
   // inputs being `StringValue` which cannot be optional, and therefore no nil
   // value can be signalled or overwritten.
   bool overwriteInput = 5;
+
+  // newChildWorkflowInstanceID is an optional instance ID to use when
+  // rerunning from a child workflow. Only accepted if the event ID given is
+  // targeting a child workflow creation event.
+  optional string newChildWorkflowInstanceID = 6;
 }
 
 // RerunWorkflowFromEventResponse is the response to executing
