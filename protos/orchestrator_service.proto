@@ -14,7 +14,7 @@ import "google/protobuf/empty.proto";
 
 enum StalledReason {
     PATCH_MISMATCH = 0;
-    VERSION_NAME_MISMATCH = 1;
+    VERSION_NOT_AVAILABLE = 1;
 }
 
 message TaskRouter {
