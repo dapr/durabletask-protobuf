@@ -24,9 +24,9 @@ message TaskRouter {
 
 message OrchestrationVersion {
     repeated string patches = 1;
-    
+
     // The name of the executed workflow
-    optional string name = 2; 
+    optional string name = 2;
 }
 
 message OrchestrationInstance {
@@ -354,6 +354,11 @@ message SendEntityMessageAction {
     }
 }
 
+message OrchestratorVersionNotRegisteredAction {
+    string instanceId = 1;
+    optional string description = 2;
+}
+
 message OrchestratorAction {
     int32 id = 1;
     oneof orchestratorActionType {
@@ -364,6 +369,7 @@ message OrchestratorAction {
         CompleteOrchestrationAction completeOrchestration = 6;
         TerminateOrchestrationAction terminateOrchestration = 7;
         SendEntityMessageAction sendEntityMessage = 8;
+        OrchestratorVersionNotRegisteredAction orchestratorVersionNotRegistered = 10;
     }
     optional TaskRouter router = 9;
 }
