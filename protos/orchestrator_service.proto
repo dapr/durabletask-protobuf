@@ -355,8 +355,6 @@ message SendEntityMessageAction {
 }
 
 message OrchestratorVersionNotRegisteredAction {
-    string instanceId = 1;
-    optional string description = 2;
 }
 
 message OrchestratorAction {
