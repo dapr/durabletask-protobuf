@@ -354,7 +354,7 @@ message SendEntityMessageAction {
     }
 }
 
-message OrchestratorVersionNotRegisteredAction {
+message OrchestratorVersionNotAvailableAction {
 }
 
 message OrchestratorAction {
@@ -367,7 +367,7 @@ message OrchestratorAction {
         CompleteOrchestrationAction completeOrchestration = 6;
         TerminateOrchestrationAction terminateOrchestration = 7;
         SendEntityMessageAction sendEntityMessage = 8;
-        OrchestratorVersionNotRegisteredAction orchestratorVersionNotRegistered = 10;
+        OrchestratorVersionNotAvailableAction orchestratorVersionNotAvailable = 10;
     }
     optional TaskRouter router = 9;
 }
