@@ -64,7 +64,9 @@ service TaskHubSidecarService {
     rpc CompleteWorkflowTask(WorkflowResponse) returns (CompleteTaskResponse);
 
     // Deprecated: use CompleteWorkflowTask instead.
-    rpc CompleteOrchestratorTask(WorkflowResponse) returns (CompleteTaskResponse);
+    rpc CompleteOrchestratorTask(WorkflowResponse) returns (CompleteTaskResponse) {
+        option deprecated = true;
+    }
 
     rpc CompleteEntityTask(EntityBatchResult) returns (CompleteTaskResponse);
 
@@ -98,7 +100,9 @@ service TaskHubSidecarService {
     rpc AbandonTaskWorkflowWorkItem(AbandonWorkflowTaskRequest) returns (AbandonWorkflowTaskResponse);
 
     // Deprecated: use AbandonTaskWorkflowWorkItem instead.
-    rpc AbandonTaskOrchestratorWorkItem(AbandonWorkflowTaskRequest) returns (AbandonWorkflowTaskResponse);
+    rpc AbandonTaskOrchestratorWorkItem(AbandonWorkflowTaskRequest) returns (AbandonWorkflowTaskResponse) {
+        option deprecated = true;
+    };
 
     // Abandons an entity work item.
     rpc AbandonTaskEntityWorkItem(AbandonEntityTaskRequest) returns (AbandonEntityTaskResponse);

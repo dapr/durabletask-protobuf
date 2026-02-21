@@ -56,7 +56,9 @@ service BackendService {
     rpc GetWorkflowRuntimeState(GetWorkflowRuntimeStateRequest) returns (GetWorkflowRuntimeStateResponse);
 
     // Deprecated: use GetWorkflowRuntimeState instead.
-    rpc GetOrchestrationRuntimeState(GetWorkflowRuntimeStateRequest) returns (GetWorkflowRuntimeStateResponse);
+    rpc GetOrchestrationRuntimeState(GetWorkflowRuntimeStateRequest) returns (GetWorkflowRuntimeStateResponse) {
+        option deprecated = true;
+    }
 
     // Gets the history of a workflow instance as a stream of events.
     rpc StreamInstanceHistory(StreamInstanceHistoryRequest) returns (stream HistoryChunk);
@@ -74,14 +76,18 @@ service BackendService {
     rpc CompleteWorkflowWorkItem(CompleteWorkflowWorkItemRequest) returns (CompleteWorkflowWorkItemResponse);
 
     // Deprecated: use CompleteWorkflowWorkItem instead.
-    rpc CompleteOrchestrationWorkItem(CompleteWorkflowWorkItemRequest) returns (CompleteWorkflowWorkItemResponse);
+    rpc CompleteOrchestrationWorkItem(CompleteWorkflowWorkItemRequest) returns (CompleteWorkflowWorkItemResponse) {
+        option deprecated = true;
+    };
 
     // Abandons an outstanding workflow work item. Abandoned work items will be
     // re-delivered after some delay.
     rpc AbandonWorkflowWorkItem(AbandonWorkflowWorkItemRequest) returns (AbandonWorkflowWorkItemResponse);
 
     // Deprecated: use AbandonWorkflowWorkItem instead.
-    rpc AbandonOrchestrationWorkItem(AbandonWorkflowWorkItemRequest) returns (AbandonWorkflowWorkItemResponse);
+    rpc AbandonOrchestrationWorkItem(AbandonWorkflowWorkItemRequest) returns (AbandonWorkflowWorkItemResponse) {
+        option deprecated = true;
+    }
 
     // Completes an outstanding entity work item.
     rpc CompleteEntityWorkItem(CompleteEntityWorkItemRequest) returns (CompleteEntityWorkItemResponse);
