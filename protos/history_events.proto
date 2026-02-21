@@ -24,6 +24,8 @@ message ExecutionStartedEvent {
     ParentInstanceInfo parentInstance = 5;
     google.protobuf.Timestamp scheduledStartTimestamp = 6;
     TraceContext parentTraceContext = 7;
+    // workflowSpanID is the distributed tracing span ID for the workflow
+    // execution. Used to correlate telemetry across the workflow lifetime.
     google.protobuf.StringValue workflowSpanID = 8;
     map<string, string> tags = 9;
 }
