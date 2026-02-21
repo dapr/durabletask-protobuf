@@ -1,0 +1,283 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.v1;
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "workflow_messages.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// ExecutionStartedEvent is the first event in a workflow instance's history,
+// representing the creation of the workflow.
+message ExecutionStartedEvent {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    WorkflowInstance workflowInstance = 4;
+    ParentInstanceInfo parentInstance = 5;
+    google.protobuf.Timestamp scheduledStartTimestamp = 6;
+    TraceContext parentTraceContext = 7;
+    google.protobuf.StringValue workflowSpanID = 8;
+    map<string, string> tags = 9;
+}
+
+// ExecutionCompletedEvent is appended to the history when a workflow finishes.
+message ExecutionCompletedEvent {
+    WorkflowStatus workflowStatus = 1;
+    google.protobuf.StringValue result = 2;
+    TaskFailureDetails failureDetails = 3;
+}
+
+// ExecutionTerminatedEvent is appended to the history when a workflow is
+// forcibly terminated.
+message ExecutionTerminatedEvent {
+    google.protobuf.StringValue input = 1;
+    bool recurse = 2;
+}
+
+// TaskScheduledEvent is appended to the history when a new activity task is
+// scheduled.
+message TaskScheduledEvent {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    TraceContext parentTraceContext = 4;
+    string taskExecutionId = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+}
+
+// TaskCompletedEvent is appended to the history when an activity task completes
+// successfully.
+message TaskCompletedEvent {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue result = 2;
+    string taskExecutionId = 3;
+}
+
+// TaskFailedEvent is appended to the history when an activity task fails.
+message TaskFailedEvent {
+    int32 taskScheduledId = 1;
+    TaskFailureDetails failureDetails = 2;
+    string taskExecutionId = 3;
+}
+
+// SubWorkflowInstanceCreatedEvent is appended to the history when a child
+// workflow instance is created.
+message SubWorkflowInstanceCreatedEvent {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    TraceContext parentTraceContext = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+}
+
+// SubWorkflowInstanceCompletedEvent is appended to the history when a child
+// workflow instance completes successfully.
+message SubWorkflowInstanceCompletedEvent {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue result = 2;
+}
+
+// SubWorkflowInstanceFailedEvent is appended to the history when a child
+// workflow instance fails.
+message SubWorkflowInstanceFailedEvent {
+    int32 taskScheduledId = 1;
+    TaskFailureDetails failureDetails = 2;
+}
+
+// TimerCreatedEvent is appended to the history when a durable timer is created.
+message TimerCreatedEvent {
+    google.protobuf.Timestamp fireAt = 1;
+    optional string name = 2;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
+}
+
+// TimerFiredEvent is appended to the history when a durable timer fires.
+message TimerFiredEvent {
+    google.protobuf.Timestamp fireAt = 1;
+    int32 timerId = 2;
+}
+
+// WorkflowExecutorStartedEvent marks the beginning of a workflow executor
+// processing a batch of events. This event has no user-visible payload and
+// is used by the runtime for internal tracking.
+message WorkflowExecutorStartedEvent {
+    optional WorkflowVersion version = 1;
+}
+
+// WorkflowExecutorCompletedEvent marks the end of a workflow executor
+// processing a batch of events.
+message WorkflowExecutorCompletedEvent {
+    // No payload data.
+}
+
+// EventSentEvent is appended to the history when a workflow sends an event to
+// another workflow instance.
+message EventSentEvent {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
+}
+
+// EventRaisedEvent is appended to the history when an external event is
+// received by a workflow instance.
+message EventRaisedEvent {
+    string name = 1;
+    google.protobuf.StringValue input = 2;
+}
+
+// GenericEvent is a catch-all event type for unrecognised event payloads.
+message GenericEvent {
+    google.protobuf.StringValue data = 1;
+}
+
+// HistoryStateEvent carries a snapshot of the workflow state.
+message HistoryStateEvent {
+    WorkflowState workflowState = 1;
+}
+
+// ContinueAsNewEvent is appended when a workflow continues-as-new.
+message ContinueAsNewEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+// ExecutionSuspendedEvent is appended when a workflow is suspended.
+message ExecutionSuspendedEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+// ExecutionResumedEvent is appended when a suspended workflow is resumed.
+message ExecutionResumedEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+// ExecutionStalledEvent is appended when a workflow execution is stalled.
+message ExecutionStalledEvent {
+    StalledReason reason = 1;
+    optional string description = 2;
+}
+
+// EntityOperationSignaledEvent represents an entity signal (fire-and-forget)
+// operation appended to the history.
+message EntityOperationSignaledEvent {
+    string requestId = 1;
+    string operation = 2;
+    google.protobuf.Timestamp scheduledTime = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.StringValue targetInstanceId = 5; // used only within histories, null in messages
+}
+
+// EntityOperationCalledEvent represents an entity call (request-response)
+// operation appended to the history.
+message EntityOperationCalledEvent {
+    string requestId = 1;
+    string operation = 2;
+    google.protobuf.Timestamp scheduledTime = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.StringValue parentInstanceId = 5;  // used only within messages, null in histories
+    google.protobuf.StringValue parentExecutionId = 6;  // used only within messages, null in histories
+    google.protobuf.StringValue targetInstanceId = 7; // used only within histories, null in messages
+}
+
+// EntityLockRequestedEvent is appended when a workflow requests an entity lock.
+message EntityLockRequestedEvent {
+    string criticalSectionId = 1;
+    repeated string lockSet = 2;
+    int32 position = 3;
+    google.protobuf.StringValue parentInstanceId = 4; // used only within messages, null in histories
+}
+
+// EntityOperationCompletedEvent is appended when an entity operation completes
+// successfully.
+message EntityOperationCompletedEvent {
+    string requestId = 1;
+    google.protobuf.StringValue output = 2;
+}
+
+// EntityOperationFailedEvent is appended when an entity operation fails.
+message EntityOperationFailedEvent {
+    string requestId = 1;
+    TaskFailureDetails failureDetails = 2;
+}
+
+// EntityUnlockSentEvent is appended when a workflow releases an entity lock.
+message EntityUnlockSentEvent {
+    string criticalSectionId = 1;
+    google.protobuf.StringValue parentInstanceId = 2;  // used only within messages, null in histories
+    google.protobuf.StringValue targetInstanceId = 3;  // used only within histories, null in messages
+}
+
+// EntityLockGrantedEvent is appended when an entity lock is granted.
+message EntityLockGrantedEvent {
+    string criticalSectionId = 1;
+}
+
+// HistoryEvent is the container for all workflow history event types.
+message HistoryEvent {
+    int32 eventId = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    oneof eventType {
+        ExecutionStartedEvent executionStarted = 3;
+        ExecutionCompletedEvent executionCompleted = 4;
+        ExecutionTerminatedEvent executionTerminated = 5;
+        TaskScheduledEvent taskScheduled = 6;
+        TaskCompletedEvent taskCompleted = 7;
+        TaskFailedEvent taskFailed = 8;
+        SubWorkflowInstanceCreatedEvent subWorkflowInstanceCreated = 9;
+        SubWorkflowInstanceCompletedEvent subWorkflowInstanceCompleted = 10;
+        SubWorkflowInstanceFailedEvent subWorkflowInstanceFailed = 11;
+        TimerCreatedEvent timerCreated = 12;
+        TimerFiredEvent timerFired = 13;
+        WorkflowExecutorStartedEvent workflowExecutorStarted = 14;
+        WorkflowExecutorCompletedEvent workflowExecutorCompleted = 15;
+        EventSentEvent eventSent = 16;
+        EventRaisedEvent eventRaised = 17;
+        GenericEvent genericEvent = 18;
+        HistoryStateEvent historyState = 19;
+        ContinueAsNewEvent continueAsNew = 20;
+        ExecutionSuspendedEvent executionSuspended = 21;
+        ExecutionResumedEvent executionResumed = 22;
+        EntityOperationSignaledEvent entityOperationSignaled = 23;
+        EntityOperationCalledEvent entityOperationCalled = 24;
+        EntityOperationCompletedEvent entityOperationCompleted = 25;
+        EntityOperationFailedEvent entityOperationFailed = 26;
+        EntityLockRequestedEvent entityLockRequested = 27;
+        EntityLockGrantedEvent entityLockGranted = 28;
+        EntityUnlockSentEvent entityUnlockSent = 29;
+        ExecutionStalledEvent executionStalled = 31;
+    }
+    optional TaskRouter router = 30;
+}
+
+// HistoryChunk is a batch of history events, returned by streaming RPCs.
+message HistoryChunk {
+    repeated HistoryEvent events = 1;
+}
+
+// StreamInstanceHistoryRequest is the request payload for streaming a workflow
+// instance's history.
+message StreamInstanceHistoryRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+
+    // When set to true, the service may return a more optimised response
+    // suitable for worker processing.
+    bool forWorkItemProcessing = 3;
+}

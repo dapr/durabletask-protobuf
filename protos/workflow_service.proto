@@ -1,0 +1,425 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.v1;
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "workflow_messages.proto";
+import "history_events.proto";
+import "workflow_actions.proto";
+import "entity_messages.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+// TaskHubSidecarService is the gRPC service exposed by the Durable Task sidecar
+// and consumed by language-SDK workers.
+service TaskHubSidecarService {
+    // Sends a hello request to the sidecar service.
+    rpc Hello(google.protobuf.Empty) returns (google.protobuf.Empty);
+
+    // Starts a new workflow instance.
+    rpc StartInstance(CreateInstanceRequest) returns (CreateInstanceResponse);
+
+    // Gets the status of an existing workflow instance.
+    rpc GetInstance(GetInstanceRequest) returns (GetInstanceResponse);
+
+    // Rewinds a workflow instance to last known good state and replays from
+    // there.
+    rpc RewindInstance(RewindInstanceRequest) returns (RewindInstanceResponse);
+
+    // Waits for a workflow instance to reach a running or completion state.
+    rpc WaitForInstanceStart(GetInstanceRequest) returns (GetInstanceResponse);
+
+    // Waits for a workflow instance to reach a completion state (completed,
+    // failed, terminated, etc.).
+    rpc WaitForInstanceCompletion(GetInstanceRequest) returns (GetInstanceResponse);
+
+    // Raises an event to a running workflow instance.
+    rpc RaiseEvent(RaiseEventRequest) returns (RaiseEventResponse);
+
+    // Terminates a running workflow instance.
+    rpc TerminateInstance(TerminateRequest) returns (TerminateResponse);
+
+    // Suspends a running workflow instance.
+    rpc SuspendInstance(SuspendRequest) returns (SuspendResponse);
+
+    // Resumes a suspended workflow instance.
+    rpc ResumeInstance(ResumeRequest) returns (ResumeResponse);
+
+    rpc QueryInstances(QueryInstancesRequest) returns (QueryInstancesResponse);
+    rpc PurgeInstances(PurgeInstancesRequest) returns (PurgeInstancesResponse);
+
+    rpc GetWorkItems(GetWorkItemsRequest) returns (stream WorkItem);
+    rpc CompleteActivityTask(ActivityResponse) returns (CompleteTaskResponse);
+
+    // CompleteWorkflowTask reports the result of processing a workflow work
+    // item.
+    rpc CompleteWorkflowTask(WorkflowResponse) returns (CompleteTaskResponse);
+
+    // Deprecated: use CompleteWorkflowTask instead.
+    rpc CompleteOrchestratorTask(WorkflowResponse) returns (CompleteTaskResponse);
+
+    rpc CompleteEntityTask(EntityBatchResult) returns (CompleteTaskResponse);
+
+    // Gets the history of a workflow instance as a stream of events.
+    rpc StreamInstanceHistory(StreamInstanceHistoryRequest) returns (stream HistoryChunk);
+
+    // Deletes and creates the necessary resources for the workflow service and
+    // the instance store.
+    rpc CreateTaskHub(CreateTaskHubRequest) returns (CreateTaskHubResponse);
+
+    // Deletes the resources for the workflow service and optionally the
+    // instance store.
+    rpc DeleteTaskHub(DeleteTaskHubRequest) returns (DeleteTaskHubResponse);
+
+    // Sends a signal to an entity.
+    rpc SignalEntity(SignalEntityRequest) returns (SignalEntityResponse);
+
+    // Gets information about a specific entity.
+    rpc GetEntity(GetEntityRequest) returns (GetEntityResponse);
+
+    // Queries entities.
+    rpc QueryEntities(QueryEntitiesRequest) returns (QueryEntitiesResponse);
+
+    // Cleans entity storage.
+    rpc CleanEntityStorage(CleanEntityStorageRequest) returns (CleanEntityStorageResponse);
+
+    // Abandons a single activity work item.
+    rpc AbandonTaskActivityWorkItem(AbandonActivityTaskRequest) returns (AbandonActivityTaskResponse);
+
+    // Abandons a workflow work item.
+    rpc AbandonTaskWorkflowWorkItem(AbandonWorkflowTaskRequest) returns (AbandonWorkflowTaskResponse);
+
+    // Deprecated: use AbandonTaskWorkflowWorkItem instead.
+    rpc AbandonTaskOrchestratorWorkItem(AbandonWorkflowTaskRequest) returns (AbandonWorkflowTaskResponse);
+
+    // Abandons an entity work item.
+    rpc AbandonTaskEntityWorkItem(AbandonEntityTaskRequest) returns (AbandonEntityTaskResponse);
+
+    // Reruns a workflow from a specific event ID of a workflow instance.
+    rpc RerunWorkflowFromEvent(RerunWorkflowFromEventRequest) returns (RerunWorkflowFromEventResponse);
+
+    rpc ListInstanceIDs(ListInstanceIDsRequest) returns (ListInstanceIDsResponse);
+    rpc GetInstanceHistory(GetInstanceHistoryRequest) returns (GetInstanceHistoryResponse);
+}
+
+// CreateInstanceRequest is the request payload for starting a new workflow
+// instance.
+message CreateInstanceRequest {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.Timestamp scheduledStartTimestamp = 5;
+    WorkflowIdReusePolicy workflowIdReusePolicy = 6;
+    google.protobuf.StringValue executionId = 7;
+    map<string, string> tags = 8;
+    TraceContext parentTraceContext = 9;
+}
+
+// CreateInstanceResponse is the response from StartInstance.
+message CreateInstanceResponse {
+    string instanceId = 1;
+}
+
+// GetInstanceRequest is the request payload for fetching a workflow instance.
+message GetInstanceRequest {
+    string instanceId = 1;
+    bool getInputsAndOutputs = 2;
+}
+
+// GetInstanceResponse is the response from GetInstance and related RPCs.
+message GetInstanceResponse {
+    bool exists = 1;
+    WorkflowState workflowState = 2;
+}
+
+// RewindInstanceRequest is the request payload for rewinding a workflow
+// instance.
+message RewindInstanceRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+}
+
+// RewindInstanceResponse is the response from RewindInstance.
+message RewindInstanceResponse {
+    // Empty for now. Using explicit type in case we want to add content later.
+}
+
+// RaiseEventRequest is the request payload for raising an event on a workflow
+// instance.
+message RaiseEventRequest {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
+}
+
+// RaiseEventResponse is the response from RaiseEvent.
+message RaiseEventResponse {
+    // No payload.
+}
+
+// TerminateRequest is the request payload for terminating a workflow instance.
+message TerminateRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue output = 2;
+    bool recursive = 3;
+}
+
+// TerminateResponse is the response from TerminateInstance.
+message TerminateResponse {
+    // No payload.
+}
+
+// SuspendRequest is the request payload for suspending a workflow instance.
+message SuspendRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+}
+
+// SuspendResponse is the response from SuspendInstance.
+message SuspendResponse {
+    // No payload.
+}
+
+// ResumeRequest is the request payload for resuming a suspended workflow
+// instance.
+message ResumeRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+}
+
+// ResumeResponse is the response from ResumeInstance.
+message ResumeResponse {
+    // No payload.
+}
+
+// QueryInstancesRequest is the request payload for querying workflow instances.
+message QueryInstancesRequest {
+    InstanceQuery query = 1;
+}
+
+// InstanceQuery defines filter criteria for querying workflow instances.
+message InstanceQuery {
+    repeated WorkflowStatus runtimeStatus = 1;
+    google.protobuf.Timestamp createdTimeFrom = 2;
+    google.protobuf.Timestamp createdTimeTo = 3;
+    repeated google.protobuf.StringValue taskHubNames = 4;
+    int32 maxInstanceCount = 5;
+    google.protobuf.StringValue continuationToken = 6;
+    google.protobuf.StringValue instanceIdPrefix = 7;
+    bool fetchInputsAndOutputs = 8;
+}
+
+// QueryInstancesResponse is the response from QueryInstances.
+message QueryInstancesResponse {
+    repeated WorkflowState workflowState = 1;
+    google.protobuf.StringValue continuationToken = 2;
+}
+
+// PurgeInstancesRequest is the request payload for purging workflow instances.
+message PurgeInstancesRequest {
+    oneof request {
+        string instanceId = 1;
+        PurgeInstanceFilter purgeInstanceFilter = 2;
+    }
+    bool recursive = 3;
+
+    // force will force a purge of a workflow, regardless of its current
+    // runtime state, or whether an active worker can process it; the backend
+    // will attempt to delete it anyway. This necessarily means the purging is
+    // executed outside of the workflow state machine, and therefore, can lead
+    // to corrupt state or broken workflow execution. This should _only_ be
+    // used when the client knows the workflow is not being currently processed.
+    // It is highly recommended to avoid using this flag unless absolutely
+    // necessary.
+    // Defaults to false.
+    optional bool force = 4;
+}
+
+// PurgeInstanceFilter defines filter criteria for bulk-purging workflow
+// instances.
+message PurgeInstanceFilter {
+    google.protobuf.Timestamp createdTimeFrom = 1;
+    google.protobuf.Timestamp createdTimeTo = 2;
+    repeated WorkflowStatus runtimeStatus = 3;
+}
+
+// PurgeInstancesResponse is the response from PurgeInstances.
+message PurgeInstancesResponse {
+    int32 deletedInstanceCount = 1;
+    google.protobuf.BoolValue isComplete = 2;
+}
+
+// CreateTaskHubRequest is the request payload for creating a task hub.
+message CreateTaskHubRequest {
+    bool recreateIfExists = 1;
+}
+
+// CreateTaskHubResponse is the response from CreateTaskHub.
+message CreateTaskHubResponse {
+    // No payload.
+}
+
+// DeleteTaskHubRequest is the request payload for deleting a task hub.
+message DeleteTaskHubRequest {
+    // No payload.
+}
+
+// DeleteTaskHubResponse is the response from DeleteTaskHub.
+message DeleteTaskHubResponse {
+    // No payload.
+}
+
+// AbandonActivityTaskRequest is the request payload for abandoning an activity
+// work item.
+message AbandonActivityTaskRequest {
+    string completionToken = 1;
+}
+
+// AbandonActivityTaskResponse is the response from AbandonTaskActivityWorkItem.
+message AbandonActivityTaskResponse {
+    // Empty.
+}
+
+// AbandonWorkflowTaskRequest is the request payload for abandoning a workflow
+// work item.
+message AbandonWorkflowTaskRequest {
+    string completionToken = 1;
+}
+
+// AbandonWorkflowTaskResponse is the response from AbandonTaskWorkflowWorkItem.
+message AbandonWorkflowTaskResponse {
+    // Empty.
+}
+
+// AbandonEntityTaskRequest is the request payload for abandoning an entity
+// work item.
+message AbandonEntityTaskRequest {
+    string completionToken = 1;
+}
+
+// AbandonEntityTaskResponse is the response from AbandonTaskEntityWorkItem.
+message AbandonEntityTaskResponse {
+    // Empty.
+}
+
+// WorkerCapability declares an optional capability supported by a connected
+// worker.
+enum WorkerCapability {
+    WORKER_CAPABILITY_UNSPECIFIED = 0;
+
+    // Indicates that the worker is capable of streaming instance history as a
+    // more optimised alternative to receiving the full history embedded in the
+    // workflow work-item. When set, the service may return work items without
+    // any history events. It is strongly recommended that all SDKs support this
+    // capability.
+    WORKER_CAPABILITY_HISTORY_STREAMING = 1;
+}
+
+// GetWorkItemsRequest is the request payload for opening the work-item stream.
+message GetWorkItemsRequest {
+    int32 maxConcurrentWorkflowWorkItems = 1;
+    int32 maxConcurrentActivityWorkItems = 2;
+    int32 maxConcurrentEntityWorkItems = 3;
+
+    repeated WorkerCapability capabilities = 10;
+}
+
+// WorkItem is an item of work delivered to a connected worker.
+message WorkItem {
+    oneof request {
+        WorkflowRequest workflowRequest = 1;
+        ActivityRequest activityRequest = 2;
+        EntityBatchRequest entityRequest = 3;   // (older) used by orchestration-service implementations
+        HealthPing healthPing = 4;
+        EntityRequest entityRequestV2 = 5;      // (newer) used by backend-service implementations
+    }
+    string completionToken = 10;
+}
+
+// CompleteTaskResponse is the generic acknowledgement response for task
+// completion RPCs.
+message CompleteTaskResponse {
+    // No payload.
+}
+
+// HealthPing is a no-op heartbeat message sent by the sidecar to connected
+// workers.
+message HealthPing {
+    // No payload.
+}
+
+// RerunWorkflowFromEventRequest is used to rerun a workflow instance from a
+// specific event ID.
+message RerunWorkflowFromEventRequest {
+    // sourceInstanceID is the workflow instance ID to rerun. Can be a top-level
+    // instance or a child workflow instance.
+    string sourceInstanceID = 1;
+
+    // eventID is the event ID to start the new workflow instance from.
+    uint32 eventID = 2;
+
+    // newInstanceID is the new instance ID to use for the new workflow instance.
+    // If not given, a random instance ID will be assigned.
+    optional string newInstanceID = 3;
+
+    // input can optionally be given to provide the new instance with a
+    // different input to the next activity event.
+    google.protobuf.StringValue input = 4;
+
+    // overwriteInput signals that the input to the rerun activity should be
+    // overwritten with the provided input. This is required because of the
+    // typing of inputs as StringValue which cannot be nil, and therefore no nil
+    // value can be signalled.
+    bool overwriteInput = 5;
+
+    // newChildWorkflowInstanceID is an optional instance ID to use when
+    // rerunning from a child workflow. Only accepted if the event ID given is
+    // targeting a child workflow creation event.
+    optional string newChildWorkflowInstanceID = 6;
+}
+
+// RerunWorkflowFromEventResponse is the response from RerunWorkflowFromEvent.
+message RerunWorkflowFromEventResponse {
+    string newInstanceID = 1;
+}
+
+// ListInstanceIDsRequest is used to list all workflow instances.
+message ListInstanceIDsRequest {
+    // continuationToken is the token to use for pagination. If not given, the
+    // first page will be returned.
+    optional string continuationToken = 1;
+
+    // pageSize is the maximum number of instances to return per page. If not
+    // given, all instances will be attempted to be returned.
+    optional uint32 pageSize = 2;
+}
+
+// ListInstanceIDsResponse is the response from ListInstanceIDs.
+message ListInstanceIDsResponse {
+    // instanceIds is the list of instance IDs returned.
+    repeated string instanceIds = 1;
+
+    // continuationToken is the token for fetching the next page. If there are
+    // no more pages, this will be null.
+    optional string continuationToken = 2;
+}
+
+// GetInstanceHistoryRequest is used to get the full history of a workflow
+// instance.
+message GetInstanceHistoryRequest {
+    string instanceId = 1;
+}
+
+// GetInstanceHistoryResponse is the response from GetInstanceHistory.
+message GetInstanceHistoryResponse {
+    repeated HistoryEvent events = 1;
+}

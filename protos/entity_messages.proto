@@ -1,0 +1,173 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.v1;
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "workflow_messages.proto";
+import "history_events.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// EntityBatchRequest is the work-item payload for a batch of entity operations
+// (used by older orchestration-service backends).
+message EntityBatchRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue entityState = 2;
+    repeated OperationRequest operations = 3;
+}
+
+// EntityBatchResult is the response from processing an entity batch.
+message EntityBatchResult {
+    repeated OperationResult results = 1;
+    repeated OperationAction actions = 2;
+    google.protobuf.StringValue entityState = 3;
+    TaskFailureDetails failureDetails = 4;
+    string completionToken = 5;
+    repeated OperationInfo operationInfos = 6; // used only with DTS
+}
+
+// EntityRequest is the work-item payload for entity processing (used by newer
+// backend-service implementations).
+message EntityRequest {
+    string instanceId = 1;
+    string executionId = 2;
+    google.protobuf.StringValue entityState = 3; // null if entity does not exist
+    repeated HistoryEvent operationRequests = 4;
+}
+
+// OperationRequest describes a single entity operation to be executed.
+message OperationRequest {
+    string operation = 1;
+    string requestId = 2;
+    google.protobuf.StringValue input = 3;
+}
+
+// OperationResult holds the outcome of a single entity operation.
+message OperationResult {
+    oneof resultType {
+        OperationResultSuccess success = 1;
+        OperationResultFailure failure = 2;
+    }
+}
+
+// OperationInfo records routing metadata for a single entity operation.
+message OperationInfo {
+    string requestId = 1;
+    WorkflowInstance responseDestination = 2; // null for signals
+}
+
+// OperationResultSuccess carries the successful result of an entity operation.
+message OperationResultSuccess {
+    google.protobuf.StringValue result = 1;
+}
+
+// OperationResultFailure carries the failure details of an entity operation.
+message OperationResultFailure {
+    TaskFailureDetails failureDetails = 1;
+}
+
+// OperationAction is an action produced by an entity during operation
+// processing.
+message OperationAction {
+    int32 id = 1;
+    oneof operationActionType {
+        SendSignalAction sendSignal = 2;
+        StartNewWorkflowAction startNewWorkflow = 3;
+    }
+}
+
+// SendSignalAction sends a signal to an entity instance.
+message SendSignalAction {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
+    google.protobuf.Timestamp scheduledTime = 4;
+}
+
+// StartNewWorkflowAction starts a new workflow instance from within an entity.
+message StartNewWorkflowAction {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    google.protobuf.Timestamp scheduledTime = 5;
+}
+
+// EntityMetadata holds metadata about a single entity instance.
+message EntityMetadata {
+    string instanceId = 1;
+    google.protobuf.Timestamp lastModifiedTime = 2;
+    int32 backlogQueueSize = 3;
+    google.protobuf.StringValue lockedBy = 4;
+    google.protobuf.StringValue serializedState = 5;
+}
+
+// SignalEntityRequest is the request payload for sending a signal to an entity.
+message SignalEntityRequest {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
+    string requestId = 4;
+    google.protobuf.Timestamp scheduledTime = 5;
+}
+
+// SignalEntityResponse is the response from SignalEntity.
+message SignalEntityResponse {
+    // No payload.
+}
+
+// GetEntityRequest is the request payload for fetching entity metadata.
+message GetEntityRequest {
+    string instanceId = 1;
+    bool includeState = 2;
+}
+
+// GetEntityResponse is the response from GetEntity.
+message GetEntityResponse {
+    bool exists = 1;
+    EntityMetadata entity = 2;
+}
+
+// EntityQuery defines filter criteria for querying entity instances.
+message EntityQuery {
+    google.protobuf.StringValue instanceIdStartsWith = 1;
+    google.protobuf.Timestamp lastModifiedFrom = 2;
+    google.protobuf.Timestamp lastModifiedTo = 3;
+    bool includeState = 4;
+    bool includeTransient = 5;
+    google.protobuf.Int32Value pageSize = 6;
+    google.protobuf.StringValue continuationToken = 7;
+}
+
+// QueryEntitiesRequest is the request payload for querying entity instances.
+message QueryEntitiesRequest {
+    EntityQuery query = 1;
+}
+
+// QueryEntitiesResponse is the response from QueryEntities.
+message QueryEntitiesResponse {
+    repeated EntityMetadata entities = 1;
+    google.protobuf.StringValue continuationToken = 2;
+}
+
+// CleanEntityStorageRequest is the request payload for cleaning up entity
+// storage.
+message CleanEntityStorageRequest {
+    google.protobuf.StringValue continuationToken = 1;
+    bool removeEmptyEntities = 2;
+    bool releaseOrphanedLocks = 3;
+}
+
+// CleanEntityStorageResponse is the response from CleanEntityStorage.
+message CleanEntityStorageResponse {
+    google.protobuf.StringValue continuationToken = 1;
+    int32 emptyEntitiesRemoved = 2;
+    int32 orphanedLocksReleased = 3;
+}

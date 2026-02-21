@@ -1,0 +1,123 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.v1;
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/wrappers.proto";
+
+// StalledReason describes why a workflow execution has stalled.
+enum StalledReason {
+    PATCH_MISMATCH = 0;
+    VERSION_NOT_AVAILABLE = 1;
+}
+
+// WorkflowStatus represents the current runtime status of a workflow instance.
+enum WorkflowStatus {
+    WORKFLOW_STATUS_RUNNING = 0;
+    WORKFLOW_STATUS_COMPLETED = 1;
+    WORKFLOW_STATUS_CONTINUED_AS_NEW = 2;
+    WORKFLOW_STATUS_FAILED = 3;
+    WORKFLOW_STATUS_CANCELED = 4;
+    WORKFLOW_STATUS_TERMINATED = 5;
+    WORKFLOW_STATUS_PENDING = 6;
+    WORKFLOW_STATUS_SUSPENDED = 7;
+    WORKFLOW_STATUS_STALLED = 8;
+}
+
+// CreateWorkflowAction determines how to handle a duplicate workflow instance ID.
+enum CreateWorkflowAction {
+    ERROR = 0;
+    IGNORE = 1;
+    TERMINATE = 2;
+}
+
+// TaskRouter routes a task to a specific app instance.
+message TaskRouter {
+    string sourceAppID = 1;
+    optional string targetAppID = 2;
+}
+
+// WorkflowVersion describes the version of a workflow execution.
+message WorkflowVersion {
+    repeated string patches = 1;
+
+    // The name of the executed workflow.
+    optional string name = 2;
+}
+
+// WorkflowInstance uniquely identifies a workflow instance.
+message WorkflowInstance {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+}
+
+// TaskFailureDetails contains details about a task failure.
+message TaskFailureDetails {
+    string errorType = 1;
+    string errorMessage = 2;
+    google.protobuf.StringValue stackTrace = 3;
+    TaskFailureDetails innerFailure = 4;
+    bool isNonRetriable = 5;
+}
+
+// TraceContext carries distributed tracing context.
+message TraceContext {
+    string traceParent = 1;
+    string spanID = 2 [deprecated=true];
+    google.protobuf.StringValue traceState = 3;
+}
+
+// ParentInstanceInfo holds information about a parent workflow instance.
+message ParentInstanceInfo {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue name = 2;
+    google.protobuf.StringValue version = 3;
+    WorkflowInstance workflowInstance = 4;
+    optional string appID = 5;
+}
+
+// RerunParentInstanceInfo indicates that a workflow was started as part of a
+// rerun operation. Contains information about the parent workflow instance
+// which was rerun.
+message RerunParentInstanceInfo {
+    // instanceID is the workflow instance ID this workflow has been rerun from.
+    string instanceID = 1;
+}
+
+// WorkflowIdReusePolicy determines how to handle a duplicate workflow instance ID.
+message WorkflowIdReusePolicy {
+    repeated WorkflowStatus operationStatus = 1;
+    CreateWorkflowAction action = 2;
+}
+
+// WorkflowEntityParameters holds entity-specific parameters for a workflow.
+message WorkflowEntityParameters {
+    google.protobuf.Duration entityMessageReorderWindow = 1;
+}
+
+// WorkflowState represents the full metadata of a workflow instance.
+message WorkflowState {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    WorkflowStatus workflowStatus = 4;
+    google.protobuf.Timestamp scheduledStartTimestamp = 5;
+    google.protobuf.Timestamp createdTimestamp = 6;
+    google.protobuf.Timestamp lastUpdatedTimestamp = 7;
+    google.protobuf.StringValue input = 8;
+    google.protobuf.StringValue output = 9;
+    google.protobuf.StringValue customStatus = 10;
+    TaskFailureDetails failureDetails = 11;
+    google.protobuf.StringValue executionId = 12;
+    google.protobuf.Timestamp completedTimestamp = 13;
+    google.protobuf.StringValue parentInstanceId = 14;
+    map<string, string> tags = 15;
+}

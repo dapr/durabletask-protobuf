@@ -1,0 +1,150 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+package durabletask.protos.v1;
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "workflow_messages.proto";
+import "history_events.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+// ActivityRequest is the payload delivered to a worker when a new activity
+// task is ready to be executed.
+message ActivityRequest {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    WorkflowInstance workflowInstance = 4;
+    int32 taskId = 5;
+    TraceContext parentTraceContext = 6;
+    string taskExecutionId = 7;
+}
+
+// ActivityResponse is sent by a worker to report the result of a completed
+// activity task.
+message ActivityResponse {
+    string instanceId = 1;
+    int32 taskId = 2;
+    google.protobuf.StringValue result = 3;
+    TaskFailureDetails failureDetails = 4;
+    string completionToken = 5;
+}
+
+// ScheduleTaskAction instructs the runtime to schedule a new activity task.
+message ScheduleTaskAction {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    optional TaskRouter router = 4;
+    string taskExecutionId = 5;
+}
+
+// CreateSubWorkflowAction instructs the runtime to create a child workflow
+// instance.
+message CreateSubWorkflowAction {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    optional TaskRouter router = 5;
+}
+
+// CreateTimerAction instructs the runtime to create a durable timer.
+message CreateTimerAction {
+    google.protobuf.Timestamp fireAt = 1;
+    optional string name = 2;
+}
+
+// SendEventAction instructs the runtime to send an event to another workflow
+// instance.
+message SendEventAction {
+    WorkflowInstance instance = 1;
+    string name = 2;
+    google.protobuf.StringValue data = 3;
+}
+
+// CompleteWorkflowAction instructs the runtime to mark the current workflow
+// as complete.
+message CompleteWorkflowAction {
+    WorkflowStatus workflowStatus = 1;
+    google.protobuf.StringValue result = 2;
+    google.protobuf.StringValue details = 3;
+    google.protobuf.StringValue newVersion = 4;
+    repeated HistoryEvent carryoverEvents = 5;
+    TaskFailureDetails failureDetails = 6;
+}
+
+// TerminateWorkflowAction instructs the runtime to terminate a workflow
+// instance.
+message TerminateWorkflowAction {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+    bool recurse = 3;
+}
+
+// SendEntityMessageAction instructs the runtime to deliver a message to an
+// entity.
+message SendEntityMessageAction {
+    oneof EntityMessageType {
+        EntityOperationSignaledEvent entityOperationSignaled = 1;
+        EntityOperationCalledEvent entityOperationCalled = 2;
+        EntityLockRequestedEvent entityLockRequested = 3;
+        EntityUnlockSentEvent entityUnlockSent = 4;
+    }
+}
+
+// WorkflowVersionNotAvailableAction signals that the required workflow version
+// is not available on this worker.
+message WorkflowVersionNotAvailableAction {
+}
+
+// WorkflowAction is the union of all actions a workflow can produce during a
+// single execution step.
+message WorkflowAction {
+    int32 id = 1;
+    oneof workflowActionType {
+        ScheduleTaskAction scheduleTask = 2;
+        CreateSubWorkflowAction createSubWorkflow = 3;
+        CreateTimerAction createTimer = 4;
+        SendEventAction sendEvent = 5;
+        CompleteWorkflowAction completeWorkflow = 6;
+        TerminateWorkflowAction terminateWorkflow = 7;
+        SendEntityMessageAction sendEntityMessage = 8;
+        WorkflowVersionNotAvailableAction workflowVersionNotAvailable = 10;
+    }
+    optional TaskRouter router = 9;
+}
+
+// WorkflowRequest is the payload delivered to a worker when a workflow task is
+// ready to be processed.
+message WorkflowRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+    repeated HistoryEvent pastEvents = 3;
+    repeated HistoryEvent newEvents = 4;
+    WorkflowEntityParameters entityParameters = 5;
+    bool requiresHistoryStreaming = 6;
+    optional TaskRouter router = 7;
+}
+
+// WorkflowResponse is sent by a worker to report the outcome of processing a
+// workflow task.
+message WorkflowResponse {
+    string instanceId = 1;
+    repeated WorkflowAction actions = 2;
+    google.protobuf.StringValue customStatus = 3;
+    string completionToken = 4;
+
+    // The number of work item events that were processed by the workflow
+    // executor. If not set, the service should assume all events were processed.
+    google.protobuf.Int32Value numEventsProcessed = 5;
+
+    optional WorkflowVersion version = 6;
+}
