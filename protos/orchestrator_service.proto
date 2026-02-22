@@ -419,6 +419,9 @@ service TaskHubSidecarService {
     rpc GetInstanceHistory (GetInstanceHistoryRequest) returns (GetInstanceHistoryResponse);
 }
 
+// GetWorkItemsRequest is intentionally kept as an empty message rather than
+// google.protobuf.Empty to allow adding fields in the future without breaking
+// the RPC signature.
 message GetWorkItemsRequest {
 }
 
