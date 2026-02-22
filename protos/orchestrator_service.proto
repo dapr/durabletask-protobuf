@@ -8,6 +8,7 @@ option java_package = "io.dapr.durabletask.implementation.protobuf";
 option go_package = "/api/protos";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
@@ -123,6 +124,10 @@ message TaskScheduledEvent {
     google.protobuf.StringValue input = 3;
     TraceContext parentTraceContext = 4;
     string taskExecutionId = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
 message TaskCompletedEvent {
@@ -192,6 +197,18 @@ message EventRaisedEvent {
     google.protobuf.StringValue input = 2;
 }
 
+message GenericEvent {
+    google.protobuf.StringValue data = 1;
+}
+
+message HistoryStateEvent {
+    OrchestrationState orchestrationState = 1;
+}
+
+message ContinueAsNewEvent {
+    google.protobuf.StringValue input = 1;
+}
+
 message ExecutionSuspendedEvent {
     google.protobuf.StringValue input = 1;
 }
@@ -224,6 +241,9 @@ message HistoryEvent {
         OrchestratorCompletedEvent orchestratorCompleted = 15;
         EventSentEvent eventSent = 16;
         EventRaisedEvent eventRaised = 17;
+        GenericEvent genericEvent = 18;
+        HistoryStateEvent historyState = 19;
+        ContinueAsNewEvent continueAsNew = 20;
         ExecutionSuspendedEvent executionSuspended = 21;
         ExecutionResumedEvent executionResumed = 22;
         ExecutionStalledEvent executionStalled = 31;
@@ -288,11 +308,17 @@ message OrchestratorAction {
     optional TaskRouter router = 9;
 }
 
+message OrchestratorEntityParameters {
+    google.protobuf.Duration entityMessageReorderWindow = 1;
+}
+
 message OrchestratorRequest {
     string instanceId = 1;
     google.protobuf.StringValue executionId = 2;
     repeated HistoryEvent pastEvents = 3;
     repeated HistoryEvent newEvents = 4;
+    OrchestratorEntityParameters entityParameters = 5;
+    bool requiresHistoryStreaming = 6;
     optional TaskRouter router = 7;
 }
 
