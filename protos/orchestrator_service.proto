@@ -71,6 +71,23 @@ enum OrchestrationStatus {
     ORCHESTRATION_STATUS_STALLED = 8;
 }
 
+message ParentInstanceInfo {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue name = 2;
+    google.protobuf.StringValue version = 3;
+    OrchestrationInstance orchestrationInstance = 4;
+    optional string appID = 5;
+}
+
+// RerunParentInstanceInfo is used to indicate that this orchestration was
+// started as part of a rerun operation. Contains information about the parent
+// orchestration instance which was rerun.
+message RerunParentInstanceInfo {
+  // instanceID is the orchestration instance ID this orchestration has been
+  // rerun from.
+  string instanceID = 1;
+}
+
 message TraceContext {
     string traceParent = 1;
     string spanID = 2 [deprecated=true];
@@ -82,9 +99,11 @@ message ExecutionStartedEvent {
     google.protobuf.StringValue version = 2;
     google.protobuf.StringValue input = 3;
     OrchestrationInstance orchestrationInstance = 4;
+    ParentInstanceInfo parentInstance = 5;
     google.protobuf.Timestamp scheduledStartTimestamp = 6;
     TraceContext parentTraceContext = 7;
     google.protobuf.StringValue orchestrationSpanID = 8;
+    map<string, string> tags = 9;
 }
 
 message ExecutionCompletedEvent {
@@ -124,6 +143,10 @@ message SubOrchestrationInstanceCreatedEvent {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     TraceContext parentTraceContext = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
 message SubOrchestrationInstanceCompletedEvent {
@@ -139,6 +162,10 @@ message SubOrchestrationInstanceFailedEvent {
 message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
 }
 
 message TimerFiredEvent {
@@ -152,6 +179,12 @@ message OrchestratorStartedEvent {
 
 message OrchestratorCompletedEvent {
     // No payload data
+}
+
+message EventSentEvent {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
 }
 
 message EventRaisedEvent {
@@ -189,6 +222,7 @@ message HistoryEvent {
         TimerFiredEvent timerFired = 13;
         OrchestratorStartedEvent orchestratorStarted = 14;
         OrchestratorCompletedEvent orchestratorCompleted = 15;
+        EventSentEvent eventSent = 16;
         EventRaisedEvent eventRaised = 17;
         ExecutionSuspendedEvent executionSuspended = 21;
         ExecutionResumedEvent executionResumed = 22;
@@ -218,11 +252,23 @@ message CreateTimerAction {
     optional string name = 2;
 }
 
+message SendEventAction {
+    OrchestrationInstance instance = 1;
+    string name = 2;
+    google.protobuf.StringValue data = 3;
+}
+
 message CompleteOrchestrationAction {
     OrchestrationStatus orchestrationStatus = 1;
     google.protobuf.StringValue result = 2;
     repeated HistoryEvent carryoverEvents = 5;
     TaskFailureDetails failureDetails = 6;
+}
+
+message TerminateOrchestrationAction {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+    bool recurse = 3;
 }
 
 message OrchestratorVersionNotAvailableAction {
@@ -234,7 +280,9 @@ message OrchestratorAction {
         ScheduleTaskAction scheduleTask = 2;
         CreateSubOrchestrationAction createSubOrchestration = 3;
         CreateTimerAction createTimer = 4;
+        SendEventAction sendEvent = 5;
         CompleteOrchestrationAction completeOrchestration = 6;
+        TerminateOrchestrationAction terminateOrchestration = 7;
         OrchestratorVersionNotAvailableAction orchestratorVersionNotAvailable = 10;
     }
     optional TaskRouter router = 9;
@@ -412,6 +460,9 @@ service TaskHubSidecarService {
     rpc CompleteActivityTask(ActivityResponse) returns (CompleteTaskResponse);
     rpc CompleteOrchestratorTask(OrchestratorResponse) returns (CompleteTaskResponse);
 
+    // Gets the history of an orchestration instance as a stream of events.
+    rpc StreamInstanceHistory(StreamInstanceHistoryRequest) returns (stream HistoryChunk);
+
     // Rerun a Workflow from a specific event ID of a workflow instance.
     rpc RerunWorkflowFromEvent(RerunWorkflowFromEventRequest) returns (RerunWorkflowFromEventResponse);
 
@@ -434,6 +485,18 @@ message WorkItem {
 
 message CompleteTaskResponse {
     // No payload
+}
+
+message StreamInstanceHistoryRequest {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+
+    // When set to true, the service may return a more optimized response suitable for workers.
+    bool forWorkItemProcessing = 3;
+}
+
+message HistoryChunk {
+    repeated HistoryEvent events = 1;
 }
 
 // RerunWorkflowFromEventRequest is used to rerun a workflow instance from a
