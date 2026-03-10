@@ -30,14 +30,14 @@ message RuntimeStateStalled {
   optional string description = 2;
 }
 
-// OrchestrationRuntimeState holds the current state for an orchestration.
-message OrchestrationRuntimeState {
+// WorkflowRuntimeState holds the current state for a workflow.
+message WorkflowRuntimeState {
   string instanceId = 1;
   repeated HistoryEvent newEvents = 2;
   repeated HistoryEvent oldEvents = 3;
   repeated HistoryEvent pendingTasks = 4;
   repeated HistoryEvent pendingTimers = 5;
-  repeated OrchestrationRuntimeStateMessage pendingMessages = 6;
+  repeated WorkflowRuntimeStateMessage pendingMessages = 6;
 
   ExecutionStartedEvent startEvent = 7;
   ExecutionCompletedEvent completedEvent = 8;
@@ -51,8 +51,8 @@ message OrchestrationRuntimeState {
   optional RuntimeStateStalled stalled = 15;
 }
 
-// OrchestrationRuntimeStateMessage holds an OrchestratorMessage and the target instance ID.
-message OrchestrationRuntimeStateMessage {
+// WorkflowRuntimeStateMessage holds a WorkflowMessage and the target instance ID.
+message WorkflowRuntimeStateMessage {
   HistoryEvent historyEvent = 1;
   string TargetInstanceID = 2;
 }
