@@ -1,0 +1,160 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "orchestration.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+message ExecutionStartedEvent {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    OrchestrationInstance orchestrationInstance = 4;
+    ParentInstanceInfo parentInstance = 5;
+    google.protobuf.Timestamp scheduledStartTimestamp = 6;
+    TraceContext parentTraceContext = 7;
+    google.protobuf.StringValue orchestrationSpanID = 8;
+    map<string, string> tags = 9;
+}
+
+message ExecutionCompletedEvent {
+    OrchestrationStatus orchestrationStatus = 1;
+    google.protobuf.StringValue result = 2;
+    TaskFailureDetails failureDetails = 3;
+}
+
+message ExecutionTerminatedEvent {
+    google.protobuf.StringValue input = 1;
+    bool recurse = 2;
+}
+
+message TaskScheduledEvent {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    TraceContext parentTraceContext = 4;
+    string taskExecutionId = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+}
+
+message TaskCompletedEvent {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue result = 2;
+    string taskExecutionId = 3;
+}
+
+message TaskFailedEvent {
+    int32 taskScheduledId = 1;
+    TaskFailureDetails failureDetails = 2;
+    string taskExecutionId = 3;
+}
+
+message SubOrchestrationInstanceCreatedEvent {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    TraceContext parentTraceContext = 5;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+}
+
+message SubOrchestrationInstanceCompletedEvent {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue result = 2;
+}
+
+message SubOrchestrationInstanceFailedEvent {
+    int32 taskScheduledId = 1;
+    TaskFailureDetails failureDetails = 2;
+}
+
+message TimerCreatedEvent {
+    google.protobuf.Timestamp fireAt = 1;
+    optional string name = 2;
+
+    // If defined, indicates that this task was the starting point of a new
+    // workflow execution as the result of a rerun operation.
+    optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
+}
+
+message TimerFiredEvent {
+    google.protobuf.Timestamp fireAt = 1;
+    int32 timerId = 2;
+}
+
+message OrchestratorStartedEvent {
+    optional OrchestrationVersion version = 1;
+}
+
+message OrchestratorCompletedEvent {
+    // No payload data
+}
+
+message EventSentEvent {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue input = 3;
+}
+
+message EventRaisedEvent {
+    string name = 1;
+    google.protobuf.StringValue input = 2;
+}
+
+message ContinueAsNewEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+message ExecutionSuspendedEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+message ExecutionResumedEvent {
+    google.protobuf.StringValue input = 1;
+}
+
+message ExecutionStalledEvent {
+    StalledReason reason = 1;
+    optional string description = 2;
+}
+
+message HistoryEvent {
+    int32 eventId = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    oneof eventType {
+        ExecutionStartedEvent executionStarted = 3;
+        ExecutionCompletedEvent executionCompleted = 4;
+        ExecutionTerminatedEvent executionTerminated = 5;
+        TaskScheduledEvent taskScheduled = 6;
+        TaskCompletedEvent taskCompleted = 7;
+        TaskFailedEvent taskFailed = 8;
+        SubOrchestrationInstanceCreatedEvent subOrchestrationInstanceCreated = 9;
+        SubOrchestrationInstanceCompletedEvent subOrchestrationInstanceCompleted = 10;
+        SubOrchestrationInstanceFailedEvent subOrchestrationInstanceFailed = 11;
+        TimerCreatedEvent timerCreated = 12;
+        TimerFiredEvent timerFired = 13;
+        OrchestratorStartedEvent orchestratorStarted = 14;
+        OrchestratorCompletedEvent orchestratorCompleted = 15;
+        EventSentEvent eventSent = 16;
+        EventRaisedEvent eventRaised = 17;
+        ContinueAsNewEvent continueAsNew = 20;
+        ExecutionSuspendedEvent executionSuspended = 21;
+        ExecutionResumedEvent executionResumed = 22;
+        ExecutionStalledEvent executionStalled = 31;
+    }
+    reserved 18, 19, 23, 24, 25, 26, 27, 28, 29;
+    optional TaskRouter router = 30;
+}

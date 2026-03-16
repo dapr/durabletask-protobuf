@@ -1,0 +1,74 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "orchestration.proto";
+import "history_events.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+message ScheduleTaskAction {
+    string name = 1;
+    google.protobuf.StringValue version = 2;
+    google.protobuf.StringValue input = 3;
+    optional TaskRouter router = 4;
+    string taskExecutionId = 5;
+}
+
+message CreateSubOrchestrationAction {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    google.protobuf.StringValue input = 4;
+    optional TaskRouter router = 5;
+}
+
+message CreateTimerAction {
+    google.protobuf.Timestamp fireAt = 1;
+    optional string name = 2;
+}
+
+message SendEventAction {
+    OrchestrationInstance instance = 1;
+    string name = 2;
+    google.protobuf.StringValue data = 3;
+}
+
+message CompleteOrchestrationAction {
+    OrchestrationStatus orchestrationStatus = 1;
+    google.protobuf.StringValue result = 2;
+    google.protobuf.StringValue details = 3;
+    google.protobuf.StringValue newVersion = 4;
+    repeated HistoryEvent carryoverEvents = 5;
+    TaskFailureDetails failureDetails = 6;
+}
+
+message TerminateOrchestrationAction {
+    string instanceId = 1;
+    google.protobuf.StringValue reason = 2;
+    bool recurse = 3;
+}
+
+message OrchestratorVersionNotAvailableAction {
+}
+
+message OrchestratorAction {
+    int32 id = 1;
+    oneof orchestratorActionType {
+        ScheduleTaskAction scheduleTask = 2;
+        CreateSubOrchestrationAction createSubOrchestration = 3;
+        CreateTimerAction createTimer = 4;
+        SendEventAction sendEvent = 5;
+        CompleteOrchestrationAction completeOrchestration = 6;
+        TerminateOrchestrationAction terminateOrchestration = 7;
+        OrchestratorVersionNotAvailableAction orchestratorVersionNotAvailable = 10;
+    }
+    reserved 8;
+    optional TaskRouter router = 9;
+}

@@ -1,0 +1,105 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+syntax = "proto3";
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+enum StalledReason {
+    PATCH_MISMATCH = 0;
+    VERSION_NOT_AVAILABLE = 1;
+}
+
+enum OrchestrationStatus {
+    ORCHESTRATION_STATUS_RUNNING = 0;
+    ORCHESTRATION_STATUS_COMPLETED = 1;
+    ORCHESTRATION_STATUS_CONTINUED_AS_NEW = 2;
+    ORCHESTRATION_STATUS_FAILED = 3;
+    ORCHESTRATION_STATUS_CANCELED = 4;
+    ORCHESTRATION_STATUS_TERMINATED = 5;
+    ORCHESTRATION_STATUS_PENDING = 6;
+    ORCHESTRATION_STATUS_SUSPENDED = 7;
+    ORCHESTRATION_STATUS_STALLED = 8;
+}
+
+enum CreateOrchestrationAction {
+    ERROR = 0;
+    IGNORE = 1;
+    TERMINATE = 2;
+}
+
+message TaskRouter {
+    string sourceAppID = 1;
+    optional string targetAppID = 2;
+}
+
+message OrchestrationVersion {
+    repeated string patches = 1;
+
+    // The name of the executed workflow
+    optional string name = 2;
+}
+
+message OrchestrationInstance {
+    string instanceId = 1;
+    google.protobuf.StringValue executionId = 2;
+}
+
+message TaskFailureDetails {
+    string errorType = 1;
+    string errorMessage = 2;
+    google.protobuf.StringValue stackTrace = 3;
+    TaskFailureDetails innerFailure = 4;
+    bool isNonRetriable = 5;
+}
+
+message ParentInstanceInfo {
+    int32 taskScheduledId = 1;
+    google.protobuf.StringValue name = 2;
+    google.protobuf.StringValue version = 3;
+    OrchestrationInstance orchestrationInstance = 4;
+    optional string appID = 5;
+}
+
+// RerunParentInstanceInfo is used to indicate that this orchestration was
+// started as part of a rerun operation. Contains information about the parent
+// orchestration instance which was rerun.
+message RerunParentInstanceInfo {
+  // instanceID is the orchestration instance ID this orchestration has been
+  // rerun from.
+  string instanceID = 1;
+}
+
+message TraceContext {
+    string traceParent = 1;
+    string spanID = 2 [deprecated=true];
+    google.protobuf.StringValue traceState = 3;
+}
+
+message OrchestrationIdReusePolicy {
+    repeated OrchestrationStatus operationStatus = 1;
+    CreateOrchestrationAction action = 2;
+}
+
+message OrchestrationState {
+    string instanceId = 1;
+    string name = 2;
+    google.protobuf.StringValue version = 3;
+    OrchestrationStatus orchestrationStatus = 4;
+    google.protobuf.Timestamp scheduledStartTimestamp = 5;
+    google.protobuf.Timestamp createdTimestamp = 6;
+    google.protobuf.Timestamp lastUpdatedTimestamp = 7;
+    google.protobuf.StringValue input = 8;
+    google.protobuf.StringValue output = 9;
+    google.protobuf.StringValue customStatus = 10;
+    TaskFailureDetails failureDetails = 11;
+    google.protobuf.StringValue executionId = 12;
+    google.protobuf.Timestamp completedTimestamp = 13;
+    google.protobuf.StringValue parentInstanceId = 14;
+    map<string, string> tags = 15;
+}
