@@ -88,6 +88,11 @@ message TimerCreatedEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
+
+    // If set, indicates this timer was created as a timeout for a
+    // waitForExternalEvent call. The value is the name of the external event
+    // being waited on, matching the name field of EventRaisedEvent.
+    optional string externalEventName = 4;
 }
 
 message TimerFiredEvent {
