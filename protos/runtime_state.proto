@@ -51,8 +51,8 @@ message WorkflowRuntimeState {
   optional RuntimeStateStalled stalled = 15;
 }
 
-// WorkflowRuntimeStateMessage holds a WorkflowMessage and the target instance ID.
+// WorkflowRuntimeStateMessage holds a HistoryEvent payload and the target instance ID.
 message WorkflowRuntimeStateMessage {
   HistoryEvent historyEvent = 1;
-  string TargetInstanceID = 2;
+  string targetInstanceId = 2;
 }

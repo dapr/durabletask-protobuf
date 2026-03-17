@@ -82,7 +82,7 @@ message BackendWorkflowState {
 
 message CreateWorkflowInstanceRequest {
   HistoryEvent startEvent = 1;
-  reserved 2;
+  reserved 2, "policy";
 }
 
 message WorkflowMetadata {
