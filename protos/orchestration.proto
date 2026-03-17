@@ -27,25 +27,19 @@ enum OrchestrationStatus {
     ORCHESTRATION_STATUS_STALLED = 8;
 }
 
-enum CreateOrchestrationAction {
-    ERROR = 0;
-    IGNORE = 1;
-    TERMINATE = 2;
-}
-
 message TaskRouter {
     string sourceAppID = 1;
     optional string targetAppID = 2;
 }
 
-message OrchestrationVersion {
+message WorkflowVersion {
     repeated string patches = 1;
 
     // The name of the executed workflow
     optional string name = 2;
 }
 
-message OrchestrationInstance {
+message WorkflowInstance {
     string instanceId = 1;
     google.protobuf.StringValue executionId = 2;
 }
@@ -62,15 +56,15 @@ message ParentInstanceInfo {
     int32 taskScheduledId = 1;
     google.protobuf.StringValue name = 2;
     google.protobuf.StringValue version = 3;
-    OrchestrationInstance orchestrationInstance = 4;
+    WorkflowInstance workflowInstance = 4;
     optional string appID = 5;
 }
 
-// RerunParentInstanceInfo is used to indicate that this orchestration was
+// RerunParentInstanceInfo is used to indicate that this workflow was
 // started as part of a rerun operation. Contains information about the parent
-// orchestration instance which was rerun.
+// workflow instance which was rerun.
 message RerunParentInstanceInfo {
-  // instanceID is the orchestration instance ID this orchestration has been
+  // instanceID is the workflow instance ID this workflow has been
   // rerun from.
   string instanceID = 1;
 }
@@ -81,16 +75,11 @@ message TraceContext {
     google.protobuf.StringValue traceState = 3;
 }
 
-message OrchestrationIdReusePolicy {
-    repeated OrchestrationStatus operationStatus = 1;
-    CreateOrchestrationAction action = 2;
-}
-
-message OrchestrationState {
+message WorkflowState {
     string instanceId = 1;
     string name = 2;
     google.protobuf.StringValue version = 3;
-    OrchestrationStatus orchestrationStatus = 4;
+    OrchestrationStatus workflowStatus = 4;
     google.protobuf.Timestamp scheduledStartTimestamp = 5;
     google.protobuf.Timestamp createdTimestamp = 6;
     google.protobuf.Timestamp lastUpdatedTimestamp = 7;
