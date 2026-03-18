@@ -34,8 +34,8 @@ message CreateTimerAction {
     optional string name = 2;
 
     // If set, provides additional context attached to this timer.
-    oneof timer_context {
-        ExternalEventTimerInfo external_event = 3;
+    oneof origin {
+        TimerOriginExternalEvent external_event = 3;
     }
 }
 

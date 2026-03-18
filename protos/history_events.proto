@@ -82,7 +82,7 @@ message SubOrchestrationInstanceFailedEvent {
 }
 
 // Indicates the timer was created as a timeout for a waitForExternalEvent call.
-message ExternalEventTimerInfo {
+message TimerOriginExternalEvent {
     // The name of the external event being waited on, matching EventRaisedEvent.name.
     string name = 1;
 }
@@ -96,8 +96,8 @@ message TimerCreatedEvent {
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
 
     // If set, provides additional context attached to this timer.
-    oneof timer_context {
-        ExternalEventTimerInfo external_event = 4;
+    oneof origin {
+        TimerOriginExternalEvent external_event = 4;
     }
 }
 
