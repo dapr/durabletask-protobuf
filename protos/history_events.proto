@@ -81,6 +81,12 @@ message SubOrchestrationInstanceFailedEvent {
     TaskFailureDetails failureDetails = 2;
 }
 
+// Indicates the timer was created as a timeout for a waitForExternalEvent call.
+message ExternalEventTimerInfo {
+    // The name of the external event being waited on, matching EventRaisedEvent.name.
+    string name = 1;
+}
+
 message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
@@ -89,10 +95,10 @@ message TimerCreatedEvent {
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
 
-    // If set, indicates this timer was created as a timeout for a
-    // waitForExternalEvent call. The value is the name of the external event
-    // being waited on, matching the name field of EventRaisedEvent.
-    optional string externalEventName = 4;
+    // If set, provides additional context attached to this timer.
+    oneof timer_context {
+        ExternalEventTimerInfo external_event = 4;
+    }
 }
 
 message TimerFiredEvent {

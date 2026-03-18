@@ -33,10 +33,10 @@ message CreateTimerAction {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
 
-    // If set, indicates this timer was created as a timeout for a
-    // waitForExternalEvent call. The value is the name of the external event
-    // being waited on, matching the name field of EventRaisedEvent.
-    optional string externalEventName = 3;
+    // If set, provides additional context attached to this timer.
+    oneof timer_context {
+        ExternalEventTimerInfo external_event = 3;
+    }
 }
 
 message SendEventAction {
