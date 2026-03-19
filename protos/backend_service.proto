@@ -131,10 +131,10 @@ message SigningCertificate {
 // etc.
 message HistorySignature {
   // Index of the first event covered by this signature (inclusive).
-  uint32 startEventIndex = 1;
+  uint64 startEventIndex = 1;
 
   // Number of events covered by this signature.
-  uint32 eventCount = 2;
+  uint64 eventCount = 2;
 
   // SHA-256 digest of the previous HistorySignature message (the entire
   // deterministically serialized protobuf message). Absent for the first
@@ -150,7 +150,7 @@ message HistorySignature {
   // Index into the SigningCertificate table (sigcert-NNNNNN keys).
   // Multiple signatures from the same identity share the same index.
   // A new entry is appended only when the certificate rotates.
-  uint32 certificateIndex = 5;
+  uint64 certificateIndex = 5;
 
   // Cryptographic signature over
   // SHA-256(previousSignatureDigest || eventsDigest)
