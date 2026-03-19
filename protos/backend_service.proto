@@ -116,10 +116,10 @@ message WorkflowStateMetadata {
 // across every signature from the same identity. Stored as individual actor
 // state keys: sigcert-000000, sigcert-000001, etc.
 message SigningCertificate {
-  // DER-encoded X.509 certificate chain of the signing identity. Certificates
-  // are concatenated in order: leaf first, followed by intermediates. Each
-  // certificate is a DER-encoded ASN.1 structure, concatenated directly
-  // (standard TLS/X.509 chain encoding).
+  // X.509 certificate chain of the signing identity. Certificates are
+  // DER-encoded and concatenated directly in order: leaf first, followed by
+  // intermediates. Each certificate is a self-delimiting ASN.1 SEQUENCE,
+  // so the chain can be parsed by reading consecutive DER structures.
   bytes certificate = 1;
 }
 
@@ -136,8 +136,10 @@ message HistorySignature {
   // Number of events covered by this signature.
   uint32 eventCount = 2;
 
-  // SHA-256 digest of the previous signature in the chain. Absent for the
-  // root signature (first in the chain).
+  // SHA-256 digest of the previous HistorySignature message (the entire
+  // deterministically serialized protobuf message). Absent for the first
+  // signature in the chain (no predecessor). When computing the signature
+  // input for the root case, this value is treated as empty (zero-length).
   optional bytes previousSignatureDigest = 3;
 
   // SHA-256 digest over the concatenation of the raw serialized bytes of each
@@ -153,6 +155,11 @@ message HistorySignature {
   // Cryptographic signature over
   // SHA-256(previousSignatureDigest || eventsDigest)
   // using the private key corresponding to the referenced certificate.
+  // The algorithm is determined by the certificate's key type:
+  //   Ed25519: raw Ed25519 signature over the input bytes
+  //   ECDSA:   fixed-size r||s over SHA-256(input), each component
+  //            zero-padded to the curve byte length
+  //   RSA:     PKCS#1 v1.5 with SHA-256
   bytes signature = 6;
 }
 
