@@ -97,7 +97,7 @@ message TimerCreatedEvent {
 
     // If set, provides additional context attached to this timer.
     oneof origin {
-        TimerOriginExternalEvent external_event = 4;
+        TimerOriginExternalEvent externalEvent = 4;
     }
 }
 
