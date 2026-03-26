@@ -62,7 +62,8 @@ message CreateInstanceRequest {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     google.protobuf.Timestamp scheduledStartTimestamp = 5;
-    reserved 6, "orchestrationIdReusePolicy";
+    reserved 6;
+    reserved "orchestrationIdReusePolicy";
     google.protobuf.StringValue executionId = 7;
     map<string, string> tags = 8;
     TraceContext parentTraceContext = 9;
