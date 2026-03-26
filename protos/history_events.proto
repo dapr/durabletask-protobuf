@@ -81,6 +81,9 @@ message SubOrchestrationInstanceFailedEvent {
     TaskFailureDetails failureDetails = 2;
 }
 
+// Indicates the timer was created by a createTimer call with no special origin.
+message TimerOriginCreateTimer {}
+
 // Indicates the timer was created as a timeout for a waitForExternalEvent call.
 message TimerOriginExternalEvent {
     // The name of the external event being waited on, matching EventRaisedEvent.name.
@@ -97,7 +100,8 @@ message TimerCreatedEvent {
 
     // If set, provides additional context attached to this timer.
     oneof origin {
-        TimerOriginExternalEvent externalEvent = 4;
+        TimerOriginCreateTimer createTimer = 4;
+        TimerOriginExternalEvent externalEvent = 5;
     }
 }
 

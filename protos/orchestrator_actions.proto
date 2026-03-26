@@ -35,7 +35,8 @@ message CreateTimerAction {
 
     // If set, provides additional context attached to this timer.
     oneof origin {
-        TimerOriginExternalEvent externalEvent = 3;
+        TimerOriginCreateTimer createTimer = 3;
+        TimerOriginExternalEvent externalEvent = 4;
     }
 }
 
