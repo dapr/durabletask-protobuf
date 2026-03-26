@@ -103,6 +103,64 @@ message BackendWorkflowStateMetadata {
   uint64 inboxLength = 1;
   uint64 historyLength = 2;
   uint64 generation = 3;
+
+  // Number of HistorySignature entries stored (signature-NNNNNN keys).
+  uint64 signatureLength = 4;
+
+  // Number of SigningCertificate entries stored (sigcert-NNNNNN keys).
+  uint64 signingCertificateLength = 5;
+}
+
+// A signing identity's X.509 certificate, stored once and referenced by index
+// from HistorySignature entries. This avoids duplicating the certificate
+// across every signature from the same identity. Stored as individual actor
+// state keys: sigcert-000000, sigcert-000001, etc.
+message SigningCertificate {
+  // X.509 certificate chain of the signing identity. Certificates are
+  // DER-encoded and concatenated directly in order: leaf first, followed by
+  // intermediates. Each certificate is a self-delimiting ASN.1 SEQUENCE,
+  // so the chain can be parsed by reading consecutive DER structures.
+  bytes certificate = 1;
+}
+
+// Signing metadata for a contiguous range of history events.
+// This is metadata-only — it does NOT contain the events themselves.
+// Events are stored once in history-NNNNNN keys; this message references them
+// by index range and stores only the signing artifacts.
+// Stored as individual actor state keys: signature-000000, signature-000001,
+// etc.
+message HistorySignature {
+  // Index of the first event covered by this signature (inclusive).
+  uint64 startEventIndex = 1;
+
+  // Number of events covered by this signature.
+  uint64 eventCount = 2;
+
+  // SHA-256 digest of the previous HistorySignature message (the entire
+  // deterministically serialized protobuf message). Absent for the first
+  // signature in the chain (no predecessor). When computing the signature
+  // input for the root case, this value is treated as empty (zero-length).
+  optional bytes previousSignatureDigest = 3;
+
+  // SHA-256 digest over the concatenation of the raw serialized bytes of each
+  // history event in this range, in order. The bytes are the exact values
+  // persisted to the state store (one per history-NNNNNN key).
+  bytes eventsDigest = 4;
+
+  // Index into the SigningCertificate table (sigcert-NNNNNN keys).
+  // Multiple signatures from the same identity share the same index.
+  // A new entry is appended only when the certificate rotates.
+  uint64 certificateIndex = 5;
+
+  // Cryptographic signature over
+  // SHA-256(previousSignatureDigest || eventsDigest)
+  // using the private key corresponding to the referenced certificate.
+  // The algorithm is determined by the certificate's key type:
+  //   Ed25519: raw Ed25519 signature over the input bytes
+  //   ECDSA:   fixed-size r||s over SHA-256(input), each component
+  //            zero-padded to the curve byte length
+  //   RSA:     PKCS#1 v1.5 with SHA-256
+  bytes signature = 6;
 }
 
 message DurableTimer {
