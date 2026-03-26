@@ -81,6 +81,15 @@ message SubOrchestrationInstanceFailedEvent {
     TaskFailureDetails failureDetails = 2;
 }
 
+// Indicates the timer was created by a createTimer call with no special origin.
+message TimerOriginCreateTimer {}
+
+// Indicates the timer was created as a timeout for a waitForExternalEvent call.
+message TimerOriginExternalEvent {
+    // The name of the external event being waited on, matching EventRaisedEvent.name.
+    string name = 1;
+}
+
 message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
@@ -88,6 +97,12 @@ message TimerCreatedEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 3;
+
+    // If set, provides additional context attached to this timer.
+    oneof origin {
+        TimerOriginCreateTimer createTimer = 4;
+        TimerOriginExternalEvent externalEvent = 5;
+    }
 }
 
 message TimerFiredEvent {

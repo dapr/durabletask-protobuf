@@ -32,6 +32,12 @@ message CreateSubOrchestrationAction {
 message CreateTimerAction {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
+
+    // If set, provides additional context attached to this timer.
+    oneof origin {
+        TimerOriginCreateTimer createTimer = 3;
+        TimerOriginExternalEvent externalEvent = 4;
+    }
 }
 
 message SendEventAction {
