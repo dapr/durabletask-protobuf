@@ -19,7 +19,7 @@ message ActivityRequest {
     string name = 1;
     google.protobuf.StringValue version = 2;
     google.protobuf.StringValue input = 3;
-    OrchestrationInstance orchestrationInstance = 4;
+    WorkflowInstance workflowInstance = 4;
     int32 taskId = 5;
     TraceContext parentTraceContext = 6;
     string taskExecutionId = 7;
@@ -33,7 +33,7 @@ message ActivityResponse {
     string completionToken = 5;
 }
 
-message OrchestratorRequest {
+message WorkflowRequest {
     string instanceId = 1;
     google.protobuf.StringValue executionId = 2;
     repeated HistoryEvent pastEvents = 3;
@@ -43,17 +43,17 @@ message OrchestratorRequest {
     optional TaskRouter router = 7;
 }
 
-message OrchestratorResponse {
+message WorkflowResponse {
     string instanceId = 1;
-    repeated OrchestratorAction actions = 2;
+    repeated WorkflowAction actions = 2;
     google.protobuf.StringValue customStatus = 3;
     string completionToken = 4;
 
-    // The number of work item events that were processed by the orchestrator.
-    // This field is optional. If not set, the service should assume that the orchestrator processed all events.
+    // The number of work item events that were processed by the workflow.
+    // This field is optional. If not set, the service should assume that the workflow processed all events.
     google.protobuf.Int32Value numEventsProcessed = 5;
 
-    optional OrchestrationVersion version = 6;
+    optional WorkflowVersion version = 6;
 }
 
 message CreateInstanceRequest {
@@ -62,7 +62,7 @@ message CreateInstanceRequest {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     google.protobuf.Timestamp scheduledStartTimestamp = 5;
-    OrchestrationIdReusePolicy orchestrationIdReusePolicy = 6;
+    reserved 6, "orchestrationIdReusePolicy";
     google.protobuf.StringValue executionId = 7;
     map<string, string> tags = 8;
     TraceContext parentTraceContext = 9;
@@ -79,7 +79,7 @@ message GetInstanceRequest {
 
 message GetInstanceResponse {
     bool exists = 1;
-    OrchestrationState orchestrationState = 2;
+    WorkflowState workflowState = 2;
 }
 
 message RaiseEventRequest {
@@ -158,7 +158,7 @@ enum WorkerCapability {
     WORKER_CAPABILITY_UNSPECIFIED = 0;
 
     // Indicates that the worker is capable of streaming instance history as a more optimized
-    // alternative to receiving the full history embedded in the orchestrator work-item.
+    // alternative to receiving the full history embedded in the workflow work-item.
     // When set, the service may return work items without any history events as an optimization.
     // It is strongly recommended that all SDKs support this capability.
     WORKER_CAPABILITY_HISTORY_STREAMING = 1;
@@ -166,7 +166,7 @@ enum WorkerCapability {
 
 message WorkItem {
     oneof request {
-        OrchestratorRequest orchestratorRequest = 1;
+        WorkflowRequest workflowRequest = 1;
         ActivityRequest activityRequest = 2;
     }
     reserved 3, 4, 5;
@@ -180,8 +180,8 @@ message CompleteTaskResponse {
 // RerunWorkflowFromEventRequest is used to rerun a workflow instance from a
 // specific event ID.
 message RerunWorkflowFromEventRequest {
-  // sourceInstanceID is the orchestration instance ID to rerun. Can be a top
-  // level instance, or sub-orchestration instance.
+  // sourceInstanceID is the workflow instance ID to rerun. Can be a top
+  // level instance, or child workflow instance.
   string sourceInstanceID = 1;
 
   // the event id to start the new workflow instance from.
@@ -213,7 +213,7 @@ message RerunWorkflowFromEventResponse {
     string newInstanceID = 1;
 }
 
-// ListInstanceIDsRequest is used to list all orchestration instances.
+// ListInstanceIDsRequest is used to list all workflow instances.
 message ListInstanceIDsRequest {
     // continuationToken is the continuation token to use for pagination. This
     // is the token which the next page should start from. If not given, the
@@ -235,8 +235,8 @@ message ListInstanceIDsResponse {
   optional string continuationToken = 2;
 }
 
-// GetInstanceHistoryRequest is used to get the full history of an
-// orchestration instance.
+// GetInstanceHistoryRequest is used to get the full history of a
+// workflow instance.
 message GetInstanceHistoryRequest {
     string instanceId = 1;
 }
@@ -250,35 +250,42 @@ service TaskHubSidecarService {
     // Sends a hello request to the sidecar service.
     rpc Hello(google.protobuf.Empty) returns (google.protobuf.Empty);
 
-    // Starts a new orchestration instance.
+    // Starts a new workflow instance.
     rpc StartInstance(CreateInstanceRequest) returns (CreateInstanceResponse);
 
-    // Gets the status of an existing orchestration instance.
+    // Gets the status of an existing workflow instance.
     rpc GetInstance(GetInstanceRequest) returns (GetInstanceResponse);
 
-    // Waits for an orchestration instance to reach a running or completion state.
+    // Waits for a workflow instance to reach a running or completion state.
     rpc WaitForInstanceStart(GetInstanceRequest) returns (GetInstanceResponse);
 
-    // Waits for an orchestration instance to reach a completion state (completed, failed, terminated, etc.).
+    // Waits for a workflow instance to reach a completion state (completed, failed, terminated, etc.).
     rpc WaitForInstanceCompletion(GetInstanceRequest) returns (GetInstanceResponse);
 
-    // Raises an event to a running orchestration instance.
+    // Raises an event to a running workflow instance.
     rpc RaiseEvent(RaiseEventRequest) returns (RaiseEventResponse);
 
-    // Terminates a running orchestration instance.
+    // Terminates a running workflow instance.
     rpc TerminateInstance(TerminateRequest) returns (TerminateResponse);
 
-    // Suspends a running orchestration instance.
+    // Suspends a running workflow instance.
     rpc SuspendInstance(SuspendRequest) returns (SuspendResponse);
 
-    // Resumes a suspended orchestration instance.
+    // Resumes a suspended workflow instance.
     rpc ResumeInstance(ResumeRequest) returns (ResumeResponse);
 
     rpc PurgeInstances(PurgeInstancesRequest) returns (PurgeInstancesResponse);
 
     rpc GetWorkItems(GetWorkItemsRequest) returns (stream WorkItem);
     rpc CompleteActivityTask(ActivityResponse) returns (CompleteTaskResponse);
-    rpc CompleteOrchestratorTask(OrchestratorResponse) returns (CompleteTaskResponse);
+
+    // Deprecated: Use CompleteWorkflowTask instead.
+    rpc CompleteOrchestratorTask(WorkflowResponse) returns (CompleteTaskResponse) {
+        option deprecated = true;
+    }
+
+    // Completes a workflow work item.
+    rpc CompleteWorkflowTask(WorkflowResponse) returns (CompleteTaskResponse);
 
     // Rerun a Workflow from a specific event ID of a workflow instance.
     rpc RerunWorkflowFromEvent(RerunWorkflowFromEventRequest) returns (RerunWorkflowFromEventResponse);

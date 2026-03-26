@@ -15,15 +15,15 @@ import "history_events.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-// Request payload for adding new orchestration events.
+// Request payload for adding new workflow events.
 message AddEventRequest {
-    // The ID of the orchestration to send an event to.
-    OrchestrationInstance instance = 1;
-    // The event to send to the orchestration.
+    // The ID of the workflow to send an event to.
+    WorkflowInstance instance = 1;
+    // The event to send to the workflow.
     HistoryEvent event = 2;
 }
 
-// Response payload for adding new orchestration events.
+// Response payload for adding new workflow events.
 message AddEventResponse {
     // No fields
 }
@@ -33,7 +33,7 @@ message CompleteActivityWorkItemRequest {
     // The completion token that was provided when the work item was fetched.
     string completionToken = 1;
 
-    // The response event that will be sent to the orchestrator.
+    // The response event that will be sent to the workflow.
     // This must be either a TaskCompleted event or a TaskFailed event.
     HistoryEvent responseEvent = 2;
 }
@@ -43,37 +43,37 @@ message CompleteActivityWorkItemResponse {
     // No fields
 }
 
-// Request payload for completing an orchestration work item.
-message CompleteOrchestrationWorkItemRequest {
+// Request payload for completing a workflow work item.
+message CompleteWorkflowWorkItemRequest {
     // The completion token that was provided when the work item was fetched.
     string completionToken = 1;
-    OrchestrationInstance instance = 2;
+    WorkflowInstance instance = 2;
     OrchestrationStatus runtimeStatus = 3;
     google.protobuf.StringValue customStatus = 4;
     repeated HistoryEvent newHistory = 5;
     repeated HistoryEvent newTasks = 6;
     repeated HistoryEvent newTimers = 7;
-    repeated OrchestratorMessage newMessages = 8;
+    repeated WorkflowMessage newMessages = 8;
 
-    // The number of work item events that were processed by the orchestrator.
-    // This field is optional. If not set, the service should assume that the orchestrator processed all events.
+    // The number of work item events that were processed by the workflow.
+    // This field is optional. If not set, the service should assume that the workflow processed all events.
     google.protobuf.Int32Value numEventsProcessed = 9;
 }
 
-// Response payload for completing an orchestration work item.
-message CompleteOrchestrationWorkItemResponse {
+// Response payload for completing a workflow work item.
+message CompleteWorkflowWorkItemResponse {
 	// No fields
 }
 
-// A message to be delivered to an orchestration by the backend.
-message OrchestratorMessage {
-    // The ID of the orchestration instance to receive the message.
-    OrchestrationInstance instance = 1;
-    // The event payload to be received by the target orchestration.
+// A message to be delivered to a workflow by the backend.
+message WorkflowMessage {
+    // The ID of the workflow instance to receive the message.
+    WorkflowInstance instance = 1;
+    // The event payload to be received by the target workflow.
     HistoryEvent event = 2;
 }
 
-message WorkflowState {
+message BackendWorkflowState {
   repeated HistoryEvent inbox = 1;
   repeated HistoryEvent history = 2;
   google.protobuf.StringValue customStatus = 3;
@@ -82,10 +82,10 @@ message WorkflowState {
 
 message CreateWorkflowInstanceRequest {
   HistoryEvent startEvent = 1;
-  optional OrchestrationIdReusePolicy policy = 2;
+  reserved 2, "policy";
 }
 
-message OrchestrationMetadata {
+message WorkflowMetadata {
   string instanceId = 1;
   string name = 2;
   OrchestrationStatus runtimeStatus = 3;
@@ -99,7 +99,7 @@ message OrchestrationMetadata {
   string parentInstanceId = 11;
 }
 
-message WorkflowStateMetadata {
+message BackendWorkflowStateMetadata {
   uint64 inboxLength = 1;
   uint64 historyLength = 2;
   uint64 generation = 3;

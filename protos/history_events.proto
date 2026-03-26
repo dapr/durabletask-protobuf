@@ -16,16 +16,16 @@ message ExecutionStartedEvent {
     string name = 1;
     google.protobuf.StringValue version = 2;
     google.protobuf.StringValue input = 3;
-    OrchestrationInstance orchestrationInstance = 4;
+    WorkflowInstance workflowInstance = 4;
     ParentInstanceInfo parentInstance = 5;
     google.protobuf.Timestamp scheduledStartTimestamp = 6;
     TraceContext parentTraceContext = 7;
-    google.protobuf.StringValue orchestrationSpanID = 8;
+    google.protobuf.StringValue workflowSpanID = 8;
     map<string, string> tags = 9;
 }
 
 message ExecutionCompletedEvent {
-    OrchestrationStatus orchestrationStatus = 1;
+    OrchestrationStatus workflowStatus = 1;
     google.protobuf.StringValue result = 2;
     TaskFailureDetails failureDetails = 3;
 }
@@ -59,7 +59,7 @@ message TaskFailedEvent {
     string taskExecutionId = 3;
 }
 
-message SubOrchestrationInstanceCreatedEvent {
+message ChildWorkflowInstanceCreatedEvent {
     string instanceId = 1;
     string name = 2;
     google.protobuf.StringValue version = 3;
@@ -71,12 +71,12 @@ message SubOrchestrationInstanceCreatedEvent {
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 }
 
-message SubOrchestrationInstanceCompletedEvent {
+message ChildWorkflowInstanceCompletedEvent {
     int32 taskScheduledId = 1;
     google.protobuf.StringValue result = 2;
 }
 
-message SubOrchestrationInstanceFailedEvent {
+message ChildWorkflowInstanceFailedEvent {
     int32 taskScheduledId = 1;
     TaskFailureDetails failureDetails = 2;
 }
@@ -110,11 +110,11 @@ message TimerFiredEvent {
     int32 timerId = 2;
 }
 
-message OrchestratorStartedEvent {
-    optional OrchestrationVersion version = 1;
+message WorkflowStartedEvent {
+    optional WorkflowVersion version = 1;
 }
 
-message OrchestratorCompletedEvent {
+message WorkflowCompletedEvent {
     // No payload data
 }
 
@@ -156,13 +156,13 @@ message HistoryEvent {
         TaskScheduledEvent taskScheduled = 6;
         TaskCompletedEvent taskCompleted = 7;
         TaskFailedEvent taskFailed = 8;
-        SubOrchestrationInstanceCreatedEvent subOrchestrationInstanceCreated = 9;
-        SubOrchestrationInstanceCompletedEvent subOrchestrationInstanceCompleted = 10;
-        SubOrchestrationInstanceFailedEvent subOrchestrationInstanceFailed = 11;
+        ChildWorkflowInstanceCreatedEvent childWorkflowInstanceCreated = 9;
+        ChildWorkflowInstanceCompletedEvent childWorkflowInstanceCompleted = 10;
+        ChildWorkflowInstanceFailedEvent childWorkflowInstanceFailed = 11;
         TimerCreatedEvent timerCreated = 12;
         TimerFiredEvent timerFired = 13;
-        OrchestratorStartedEvent orchestratorStarted = 14;
-        OrchestratorCompletedEvent orchestratorCompleted = 15;
+        WorkflowStartedEvent workflowStarted = 14;
+        WorkflowCompletedEvent workflowCompleted = 15;
         EventSentEvent eventSent = 16;
         EventRaisedEvent eventRaised = 17;
         ContinueAsNewEvent continueAsNew = 20;
