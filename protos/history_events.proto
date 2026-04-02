@@ -90,6 +90,18 @@ message TimerOriginExternalEvent {
     string name = 1;
 }
 
+// Indicates the timer was created as a retry delay for an activity execution.
+message TimerOriginActivityRetry {
+    // The task execution ID of the activity being retried.
+    string taskExecutionId = 1;
+}
+
+// Indicates the timer was created as a retry delay for a workflow execution.
+message TimerOriginWorkflowRetry {
+    // The instance ID of the workflow being retried.
+    string instanceId = 1;
+}
+
 message TimerCreatedEvent {
     google.protobuf.Timestamp fireAt = 1;
     optional string name = 2;
@@ -102,6 +114,8 @@ message TimerCreatedEvent {
     oneof origin {
         TimerOriginCreateTimer createTimer = 4;
         TimerOriginExternalEvent externalEvent = 5;
+        TimerOriginActivityRetry activityRetry = 6;
+        TimerOriginWorkflowRetry workflowRetry = 7;
     }
 }
 
