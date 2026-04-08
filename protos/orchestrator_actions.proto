@@ -19,6 +19,9 @@ message ScheduleTaskAction {
     google.protobuf.StringValue input = 3;
     optional TaskRouter router = 4;
     string taskExecutionId = 5;
+
+    // History propagation configuration, default = no propagation
+    optional HistoryPropagationScope historyPropagation = 6;
 }
 
 message CreateChildWorkflowAction {
@@ -27,6 +30,9 @@ message CreateChildWorkflowAction {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     optional TaskRouter router = 5;
+
+    // History propagation configuration, default = no propagation
+    optional HistoryPropagationScope historyPropagation = 6;
 }
 
 message CreateTimerAction {

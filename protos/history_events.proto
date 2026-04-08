@@ -12,6 +12,16 @@ import "orchestration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
+message PropagatedHistory {
+    // The history events being propagated, copied from the parent's
+    // history at propagation time.
+    repeated HistoryEvent events = 1;
+    // The propagation scope that was used to produce this history.
+    HistoryPropagationScope scope = 2;
+
+    // TODO: Add signing fields as a follow-up.
+}
+
 message ExecutionStartedEvent {
     string name = 1;
     google.protobuf.StringValue version = 2;

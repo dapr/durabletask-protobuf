@@ -75,6 +75,18 @@ message TraceContext {
     google.protobuf.StringValue traceState = 3;
 }
 
+// HistoryPropagationScope controls how history is propagated to a child
+// workflow or activity
+enum HistoryPropagationScope {
+    // Propagate the caller's own history events only. The child does
+    // not see any ancestral history (trust boundary).
+    HISTORY_PROPAGATION_SCOPE_OWN_HISTORY = 0;
+    // Propagate the caller's own history events AND the full ancestral
+    // chain. Any propagated history this workflow received from its
+    // parent is forwarded to the child.
+    HISTORY_PROPAGATION_SCOPE_LINEAGE = 1;
+}
+
 message WorkflowState {
     string instanceId = 1;
     string name = 2;

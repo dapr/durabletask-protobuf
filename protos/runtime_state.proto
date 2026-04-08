@@ -55,4 +55,10 @@ message WorkflowRuntimeState {
 message WorkflowRuntimeStateMessage {
   HistoryEvent historyEvent = 1;
   string targetInstanceId = 2;
+
+  // Propagated history to deliver to the child workflow.
+  // This is a transport field used when creating child workflows with
+  // history propagation enabled. It is NOT stored as part of any
+  // workflow's history events.
+  optional PropagatedHistory propagatedHistory = 3;
 }
