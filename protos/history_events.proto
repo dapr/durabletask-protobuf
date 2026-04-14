@@ -12,12 +12,31 @@ import "orchestration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
+// A contiguous range of events produced by a single app.
+// Used to track which app produced which events when history from
+// multiple workflows is flattened into a single PropagatedHistory.
+message PropagatedHistoryChunk {
+    string app_id = 1;
+    // Index of the first event in this chunk (inclusive),
+    // into PropagatedHistory.events.
+    int32 start_event_index = 2;
+    // Number of events in this chunk.
+    int32 event_count = 3;
+    // The workflow instance ID/name that produced the events in this chunk.
+    string instance_id = 4;
+    string workflow_name = 5;
+}
+
 message PropagatedHistory {
     // The history events being propagated, copied from the parent's
     // history at propagation time.
     repeated HistoryEvent events = 1;
     // The propagation scope that was used to produce this history.
     HistoryPropagationScope scope = 2;
+    // Chunk boundaries identifying which app produced which events.
+    // Chunks are ordered & non-overlapping. Together they cover
+    // all events in the events field.
+    repeated PropagatedHistoryChunk chunks = 3;
 
     // TODO: Add signing fields as a follow-up.
 }
