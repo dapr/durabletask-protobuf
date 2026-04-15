@@ -27,6 +27,8 @@ message CreateChildWorkflowAction {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     optional TaskRouter router = 5;
+    // internal is set by the sidecar at creation time when the workflow is an internal workflow.
+    bool internal = 6;
 }
 
 message CreateTimerAction {
