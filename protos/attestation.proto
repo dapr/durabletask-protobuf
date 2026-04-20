@@ -30,12 +30,102 @@ option go_package = "/api/protos";
 // signer certificate's key type (Ed25519, ECDSA, RSA), same rules as
 // HistorySignature.signature in backend_service.proto.
 
+// ============================================================================
+// Canonical byte serialization for ioDigest
+// ============================================================================
+//
+// ioDigest fields commit to an invocation's input and output. To stay stable
+// across protobuf versions, implementations, and languages, the bytes fed
+// into the digest are defined directly in terms of user-visible data — the
+// protobuf marshaler's output is never used.
+//
+// The digest is:
+//     sha256( u64be(len(inputBytes))  || inputBytes ||
+//             u64be(len(outputBytes)) || outputBytes )
+// where inputBytes and outputBytes come from the rules below. Length
+// prefixes are big-endian uint64 to prevent concatenation ambiguity (same
+// pattern as HistorySignature.eventsDigest).
+//
+// --- String normalization ---
+// All UTF-8 string bytes used below are first normalized to Unicode
+// Normalization Form C (NFC). Different-language SDKs (Go, .NET, Python,
+// Java, JS) may default to different Unicode normalization forms; NFC is
+// the web-standard canonical form and ensures that semantically equal
+// strings produce identical bytes regardless of which SDK emitted them.
+// Verifiers MUST NFC-normalize before hashing to compare against a
+// signer-produced digest.
+//
+// --- Input bytes (child workflows and activities) ---
+// Inputs are carried as google.protobuf.StringValue in the source event.
+// Canonical bytes:
+//     wrapper unset:  zero-length
+//     wrapper set:    nfc_utf8(string_value.value)
+// The StringValue envelope is not included — only the NFC-normalized
+// UTF-8 content of the value field.
+//
+// --- Output bytes, COMPLETED (child and activity) ---
+// Same rule as input: NFC-normalized UTF-8 bytes of the result
+// StringValue's value field, or zero-length if unset.
+//
+// --- Output bytes, FAILED (child and activity) ---
+// Spec-defined canonical serialization of TaskFailureDetails, independent
+// of protobuf wire format:
+//
+//     u32be(len(errorType))     || nfc_utf8(errorType)
+//     u32be(len(errorMessage))  || nfc_utf8(errorMessage)
+//     u32be(len(stackTrace))    || nfc_utf8(stackTrace)  // StringValue.value,
+//                                                         // zero-length if unset
+//     u8(0 if innerFailure is unset, 1 if set)
+//     if innerFailure is set:
+//         <recursive serialization of innerFailure using these same rules>
+//
+// Fields appear in this fixed order regardless of proto field numbers.
+// Unset string fields serialize as zero-length. No protobuf tags, varints,
+// or envelopes are emitted. The TaskFailureDetails.isNonRetriable field is
+// intentionally excluded — it is a framework retry-policy hint, not a
+// description of the failure, and committing to it would couple attestation
+// verification to retry-semantics evolution with no security benefit.
+//
+// The innerFailure recursion depth is capped (implementation-defined, at
+// least 32 levels). Chains exceeding the cap are treated as malformed:
+// the signer refuses to produce an attestation and the verifier refuses
+// to verify one. This bounds the work performed on attacker-controlled
+// input.
+//
+// --- Versioning ---
+// The canonicalSpecVersion field on each payload identifies which revision
+// of the rules above produced the attestation's ioDigest. Verifiers that
+// don't recognize the value reject the attestation rather than risk a
+// silent digest mismatch. Current value: 1. When TaskFailureDetails or
+// another canonicalized input grows an attestation-relevant field, the
+// spec is revised and canonicalSpecVersion is incremented — the rules
+// above are never silently changed.
+//
+// --- Certificate validity ---
+// Verifiers check that the signer certificate is valid at a specific
+// point in time. The correct choice of time depends on whether the
+// attestation is being verified at ingestion or from stored history:
+//
+//   * Ingestion (parent absorbs an inbound attestation from a child/
+//     activity): use a trusted wallclock (time.Now()). The enclosing
+//     HistoryEvent.timestamp is set by the sender and is not yet covered
+//     by a signature at this point, so it cannot be trusted. Wallclock
+//     gives "is the cert still valid right now" which is the right
+//     freshness guarantee at the trust boundary.
+//
+//   * Stored / propagated history (re-verification after the enclosing
+//     event has been signed): use the enclosing HistoryEvent.timestamp.
+//     Once the event is covered by a HistorySignature, the timestamp is
+//     tamper-evident and provides a stable historical point-in-time for
+//     cert validity — the cert was valid at signing time, even if it has
+//     since expired. This mirrors how HistorySignature itself is checked
+//     against the last event in its signed range.
+
 // Terminal state of a child workflow at the moment of attestation.
 enum TerminalStatus {
     TERMINAL_STATUS_UNSPECIFIED = 0;
     TERMINAL_STATUS_COMPLETED   = 1;
     TERMINAL_STATUS_FAILED      = 2;
-    TERMINAL_STATUS_TERMINATED  = 3;
 }
 
 // Terminal state of an activity task at the moment of attestation.
@@ -61,18 +151,13 @@ message ChildCompletionAttestationPayload {
     // of the same child workflow.
     int32 parentTaskScheduledId = 2;
 
-    // sha256( u64be(len(input)) || input || u64be(len(output)) || output ).
-    // Length-prefixing prevents concatenation ambiguity, same pattern as
-    // HistorySignature.eventsDigest. On TERMINAL_STATUS_FAILED the output
-    // half is the canonical marshal of TaskFailureDetails. On
-    // TERMINAL_STATUS_TERMINATED the output half is empty (u64be(0)).
+    // sha256 commitment to this invocation's input and output. The bytes
+    // fed into the digest are produced by the canonical byte serialization
+    // spec at the top of this file — not by any protobuf marshaler — so
+    // the digest is stable across proto versions, implementations, and
+    // languages. Use terminalStatus to select the output serialization rule
+    // (COMPLETED or FAILED).
     bytes ioDigest = 3;
-
-    // sha256 of the exact bytes of the child's final HistorySignature as
-    // persisted under its last signature-NNNNNN key. Anchors this
-    // attestation to the child's signed history chain tip for offline
-    // cross-audit by parties with access to the child's state store.
-    bytes finalSignatureDigest = 4;
 
     // sha256 of the DER-encoded X.509 certificate chain bytes of the
     // signer (leaf first, intermediates concatenated- same byte format
@@ -82,7 +167,7 @@ message ChildCompletionAttestationPayload {
     // is carried as a companion field on the enclosing event on first
     // delivery and stored once in the receiver's external certificate
     // table (ext-sigcert-NNNNNN), looked up by this digest.
-    bytes signerCertDigest = 5;
+    bytes signerCertDigest = 4;
 
     // Terminal state of the child workflow at the moment of attestation.
     // Signed so that a verifier reading the attestation from propagated
@@ -90,7 +175,14 @@ message ChildCompletionAttestationPayload {
     // enclosing event type (Completed vs Failed), which may not be
     // visible or trustworthy when the attestation is inspected in
     // isolation.
-    TerminalStatus terminalStatus = 6;
+    TerminalStatus terminalStatus = 5;
+
+    // Version of the canonical byte serialization spec used to compute
+    // ioDigest. See the "Versioning" section of the spec block at the top
+    // of this file. Verifiers that don't recognize the value reject the
+    // attestation rather than risk a silent digest mismatch. Current
+    // value: 1.
+    uint32 canonicalSpecVersion = 6;
 }
 
 // Signed wrapper around ChildCompletionAttestationPayload.
@@ -125,9 +217,10 @@ message ActivityCompletionAttestationPayload {
     // ChildWorkflowInstanceCreatedEvent does for child workflows.
     string activityName = 3;
 
-    // sha256( u64be(len(input)) || input || u64be(len(output)) || output ).
-    // On ACTIVITY_TERMINAL_STATUS_FAILED the output half is the canonical
-    // marshal of TaskFailureDetails.
+    // sha256 commitment to this invocation's input and output. See the
+    // canonical byte serialization spec at the top of this file. Use
+    // terminalStatus (ACTIVITY_TERMINAL_STATUS_COMPLETED or _FAILED) to
+    // select the output serialization rule.
     bytes ioDigest = 4;
 
     // sha256 of the DER-encoded X.509 certificate chain bytes of the
@@ -137,6 +230,13 @@ message ActivityCompletionAttestationPayload {
 
     // Terminal state of the activity at the moment of attestation.
     ActivityTerminalStatus terminalStatus = 6;
+
+    // Version of the canonical byte serialization spec used to compute
+    // ioDigest. See the "Versioning" section of the spec block at the top
+    // of this file. Verifiers that don't recognize the value reject the
+    // attestation rather than risk a silent digest mismatch. Current
+    // value: 1.
+    uint32 canonicalSpecVersion = 7;
 }
 
 // Signed wrapper around ActivityCompletionAttestationPayload.
