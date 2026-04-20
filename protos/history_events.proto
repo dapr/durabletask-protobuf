@@ -8,6 +8,7 @@ option java_package = "io.dapr.durabletask.implementation.protobuf";
 option go_package = "/api/protos";
 
 import "orchestration.proto";
+import "attestation.proto";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -51,12 +52,33 @@ message TaskCompletedEvent {
     int32 taskScheduledId = 1;
     google.protobuf.StringValue result = 2;
     string taskExecutionId = 3;
+
+    // Attestation signed by the activity executor's SPIFFE identity.
+    // Present when the activity was executed under a signing-enabled
+    // configuration. Verified on inbox ingestion against the companion
+    // signerCertificate and preserved in stored history for future audit
+    // and forwarding via provenance bundles.
+    optional ActivityCompletionAttestation attestation = 4;
+
+    // Companion: DER-encoded X.509 certificate chain of the executor's
+    // signing identity (leaf first, intermediates concatenated- same
+    // format as SigningCertificate.certificate in backend_service.proto).
+    // Wire-only-n stripped by the receiver before the event is written to
+    // history-NNNNNN. The certificate lives once in ext-sigcert-NNNNNN,
+    // referenced by attestation payload's signerCertDigest.
+    optional bytes signerCertificate = 5;
 }
 
 message TaskFailedEvent {
     int32 taskScheduledId = 1;
     TaskFailureDetails failureDetails = 2;
     string taskExecutionId = 3;
+
+    // See TaskCompletedEvent.attestation.
+    optional ActivityCompletionAttestation attestation = 4;
+
+    // Wire-only companion; see TaskCompletedEvent.signerCertificate.
+    optional bytes signerCertificate = 5;
 }
 
 message ChildWorkflowInstanceCreatedEvent {
@@ -74,11 +96,33 @@ message ChildWorkflowInstanceCreatedEvent {
 message ChildWorkflowInstanceCompletedEvent {
     int32 taskScheduledId = 1;
     google.protobuf.StringValue result = 2;
+
+    // Attestation signed by the completing child workflow's SPIFFE
+    // identity. Present when the child was executed under a signing-enabled
+    // configuration. Verified on inbox ingestion against the companion
+    // signerCertificate and preserved in stored history for future audit
+    // and forwarding via provenance bundles.
+    optional ChildCompletionAttestation attestation = 3;
+
+    // Companion: DER-encoded X.509 certificate chain of the child's signing
+    // identity (leaf first, intermediates concatenated- same format as
+    // SigningCertificate.certificate in backend_service.proto). Wire-only-
+    // stripped by the receiver before the event is written to
+    // history-NNNNNN. The certificate lives once in ext-sigcert-NNNNNN,
+    // referenced by attestation payload's signerCertDigest.
+    optional bytes signerCertificate = 4;
 }
 
 message ChildWorkflowInstanceFailedEvent {
     int32 taskScheduledId = 1;
     TaskFailureDetails failureDetails = 2;
+
+    // See ChildWorkflowInstanceCompletedEvent.attestation.
+    optional ChildCompletionAttestation attestation = 3;
+
+    // Wire-only companion; see
+    // ChildWorkflowInstanceCompletedEvent.signerCertificate.
+    optional bytes signerCertificate = 4;
 }
 
 // Indicates the timer was created by a createTimer call with no special origin.
