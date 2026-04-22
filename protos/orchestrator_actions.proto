@@ -43,6 +43,8 @@ message CreateTimerAction {
     oneof origin {
         TimerOriginCreateTimer createTimer = 3;
         TimerOriginExternalEvent externalEvent = 4;
+        TimerOriginActivityRetry activityRetry = 5;
+        TimerOriginChildWorkflowRetry childWorkflowRetry = 6;
     }
 }
 
