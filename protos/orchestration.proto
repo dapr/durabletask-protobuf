@@ -78,8 +78,9 @@ message TraceContext {
 // HistoryPropagationScope controls how history is propagated to a child
 // workflow or activity
 enum HistoryPropagationScope {
-    // Unspecified/no propagation
-    HISTORY_PROPAGATION_SCOPE_UNSPECIFIED = 0;
+    // No propagation. This is the default for an unset/missing field; the
+    // child receives no history from the caller.
+    NO_HISTORY_PROPAGATION = 0;
     // Propagate the caller's own history events only. The child does
     // not see any ancestral history (trust boundary).
     HISTORY_PROPAGATION_SCOPE_OWN_HISTORY = 1;
