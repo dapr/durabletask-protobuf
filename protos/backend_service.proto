@@ -99,6 +99,7 @@ message WorkflowMetadata {
   google.protobuf.Timestamp completedAt = 10;
   string parentInstanceId = 11;
   google.protobuf.StringValue version = 12;
+  google.protobuf.StringValue parentAppid = 13;
 }
 
 message BackendWorkflowStateMetadata {
