@@ -112,6 +112,14 @@ message BackendWorkflowStateMetadata {
 
   // Number of SigningCertificate entries stored (sigcert-NNNNNN keys).
   uint64 signingCertificateLength = 5;
+
+  // Number of ExternalSigningCertificate entries stored
+  // (ext-sigcert-NNNNNN keys). Same lifecycle as signingCertificateLength:
+  // monotonically grows within a run as new foreign signer certificates
+  // are absorbed from incoming attestations, zeroed on ContinueAsNew,
+  // cleared on instance purge. Subject to the same maxStateEntries
+  // tampering bound.
+  uint64 externalSigningCertificateLength = 6;
 }
 
 // A signing identity's X.509 certificate, stored once and referenced by index
