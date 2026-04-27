@@ -74,6 +74,11 @@ message TaskScheduledEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+
+    // History propagation scope used when this task was originally scheduled.
+    // Persisted on the event so rerun can re-issue the task with the same
+    // scope after the action has been discarded.
+    optional HistoryPropagationScope historyPropagation = 7;
 }
 
 message TaskCompletedEvent {
@@ -98,6 +103,11 @@ message ChildWorkflowInstanceCreatedEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+
+    // History propagation scope used when this child workflow was originally
+    // scheduled. Persisted on the event so rerun can re-issue the child with
+    // the same scope after the action has been discarded.
+    optional HistoryPropagationScope historyPropagation = 7;
 }
 
 message ChildWorkflowInstanceCompletedEvent {
