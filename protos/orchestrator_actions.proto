@@ -20,8 +20,8 @@ message ScheduleTaskAction {
     optional TaskRouter router = 4;
     string taskExecutionId = 5;
 
-    // History propagation configuration. Absent/UNSPECIFIED = no propagation
-    optional HistoryPropagationScope historyPropagation = 6;
+    // History propagation scope. Absent/SCOPE_NONE = no propagation.
+    optional HistoryPropagationScope historyPropagationScope = 6;
 }
 
 message CreateChildWorkflowAction {
@@ -31,8 +31,8 @@ message CreateChildWorkflowAction {
     google.protobuf.StringValue input = 4;
     optional TaskRouter router = 5;
 
-    // History propagation configuration. Absent/UNSPECIFIED = no propagation
-    optional HistoryPropagationScope historyPropagation = 6;
+    // History propagation scope. Absent/SCOPE_NONE = no propagation.
+    optional HistoryPropagationScope historyPropagationScope = 6;
 }
 
 message CreateTimerAction {
