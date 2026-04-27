@@ -18,13 +18,18 @@ option go_package = "/api/protos";
 // workflows verify these claims without trusting the parent that forwarded
 // them.
 //
-// Each attestation is a (payload, signature) wrapper. The payload is the
-// canonical protobuf marshal of the inner ...Payload message, produced
-// once by the signer and thereafter treated as opaque bytes. Receivers,
-// storage layers, and verifiers never re-marshal the payload - signatures
-// are validated against the exact bytes the signer produced. This makes
-// the inner payload proto safely evolvable: old attestations with older
-// field sets remain verifiable because their stored bytes are preserved.
+// Each attestation is a (payload, signature) wrapper. The payload is a
+// deterministically serialized protobuf encoding of the inner ...Payload
+// message (same approach as HistorySignature in backend_service.proto),
+// produced once by the signer and thereafter treated as opaque bytes.
+// Receivers, storage layers, and verifiers never re-marshal the payload;
+// signatures are validated against the exact bytes the signer produced.
+// Cross-language interoperability does not depend on protobuf having a
+// universal canonical encoding (it does not): the bytes that get signed
+// are the bytes that get verified, and they are never reconstructed by
+// any peer. This makes the inner payload proto safely evolvable: old
+// attestations with older field sets remain verifiable because their
+// stored bytes are preserved.
 //
 // The signature covers sha256(payload). Algorithm is determined by the
 // signer certificate's key type (Ed25519, ECDSA, RSA), same rules as
@@ -138,8 +143,9 @@ enum ActivityTerminalStatus {
 }
 
 // Inner signed payload for a child workflow completion attestation. The
-// canonical marshal of this message is what the signer signs over and
-// what receivers verify against- never re-marshaled after production.
+// deterministically serialized form of this message is what the signer
+// signs over and what receivers verify against; the bytes are produced
+// once and never re-marshaled.
 message ChildCompletionAttestationPayload {
     // Parent workflow instance ID. Binds the attestation to a single parent
     // run, preventing replay by other instances of the same parent workflow
@@ -160,7 +166,7 @@ message ChildCompletionAttestationPayload {
     bytes ioDigest = 3;
 
     // sha256 of the DER-encoded X.509 certificate chain bytes of the
-    // signer (leaf first, intermediates concatenated- same byte format
+    // signer (leaf first, intermediates concatenated; same byte format
     // as the `certificate` field of SigningCertificate). Computed directly
     // over the DER bytes rather than any protobuf envelope, so the digest
     // is stable across protobuf version changes. The certificate itself
@@ -187,9 +193,9 @@ message ChildCompletionAttestationPayload {
 
 // Signed wrapper around ChildCompletionAttestationPayload.
 message ChildCompletionAttestation {
-    // Canonical marshal of ChildCompletionAttestationPayload produced once
-    // by the signer. Opaque bytes thereafter- receivers, storage, and
-    // verifiers never re-marshal.
+    // Deterministically serialized form of ChildCompletionAttestationPayload
+    // produced once by the signer. Opaque bytes thereafter; receivers,
+    // storage layers, and verifiers never re-marshal.
     bytes payload = 1;
 
     // Cryptographic signature over sha256(payload) using the private key
@@ -202,7 +208,7 @@ message ChildCompletionAttestation {
 // Inner signed payload for an activity completion attestation. Activities
 // have no signed history chain of their own (unlike child workflows), so
 // there is no finalSignatureDigest field. Activity identity is the hosting
-// app's SPIFFE identity- a compromised app can attest only to activities
+// app's SPIFFE identity; a compromised app can attest only to activities
 // it hosts, not to activities hosted on other apps.
 message ActivityCompletionAttestationPayload {
     // Parent workflow instance ID that scheduled the activity.
@@ -241,15 +247,17 @@ message ActivityCompletionAttestationPayload {
 
 // Signed wrapper around ActivityCompletionAttestationPayload.
 message ActivityCompletionAttestation {
-    // Canonical marshal of ActivityCompletionAttestationPayload produced
-    // once by the signer. Opaque bytes thereafter.
+    // Deterministically serialized form of
+    // ActivityCompletionAttestationPayload produced once by the signer.
+    // Opaque bytes thereafter; receivers, storage layers, and verifiers
+    // never re-marshal.
     bytes payload = 1;
 
     // Cryptographic signature over sha256(payload).
     bytes signature = 2;
 }
 
-// A foreign signer's X.509 certificate- one belonging to another workflow
+// A foreign signer's X.509 certificate; one belonging to another workflow
 // instance or activity executor whose attestations this workflow has
 // received. Stored once per unique digest and referenced by digest from
 // any attestation embedded in history. Stored as individual actor state

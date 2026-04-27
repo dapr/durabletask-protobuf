@@ -61,9 +61,9 @@ message TaskCompletedEvent {
     optional ActivityCompletionAttestation attestation = 4;
 
     // Companion: DER-encoded X.509 certificate chain of the executor's
-    // signing identity (leaf first, intermediates concatenated- same
+    // signing identity (leaf first, intermediates concatenated; same
     // format as SigningCertificate.certificate in backend_service.proto).
-    // Wire-only-n stripped by the receiver before the event is written to
+    // Wire-only; stripped by the receiver before the event is written to
     // history-NNNNNN. The certificate lives once in ext-sigcert-NNNNNN,
     // referenced by attestation payload's signerCertDigest.
     optional bytes signerCertificate = 5;
@@ -105,8 +105,8 @@ message ChildWorkflowInstanceCompletedEvent {
     optional ChildCompletionAttestation attestation = 3;
 
     // Companion: DER-encoded X.509 certificate chain of the child's signing
-    // identity (leaf first, intermediates concatenated- same format as
-    // SigningCertificate.certificate in backend_service.proto). Wire-only-
+    // identity (leaf first, intermediates concatenated; same format as
+    // SigningCertificate.certificate in backend_service.proto). Wire-only;
     // stripped by the receiver before the event is written to
     // history-NNNNNN. The certificate lives once in ext-sigcert-NNNNNN,
     // referenced by attestation payload's signerCertDigest.
