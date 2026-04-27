@@ -98,6 +98,8 @@ message WorkflowMetadata {
   TaskFailureDetails failureDetails = 9;
   google.protobuf.Timestamp completedAt = 10;
   string parentInstanceId = 11;
+  optional google.protobuf.StringValue version = 12;
+  optional google.protobuf.StringValue parentAppId = 13;
 }
 
 message BackendWorkflowStateMetadata {
