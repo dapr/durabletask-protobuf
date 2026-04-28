@@ -16,15 +16,15 @@ import "google/protobuf/wrappers.proto";
 // Used to track which app produced which events when history from
 // multiple workflows is flattened into a single PropagatedHistory.
 message PropagatedHistoryChunk {
-    string app_id = 1;
+    string appId = 1;
     // Index of the first event in this chunk (inclusive),
     // into PropagatedHistory.events.
-    int32 start_event_index = 2;
+    int32 startEventIndex = 2;
     // Number of events in this chunk.
-    int32 event_count = 3;
+    int32 eventCount = 3;
     // The workflow instance ID/name that produced the events in this chunk.
-    string instance_id = 4;
-    string workflow_name = 5;
+    string instanceId = 4;
+    string workflowName = 5;
 }
 
 message PropagatedHistory {
