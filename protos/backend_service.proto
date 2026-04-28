@@ -80,10 +80,22 @@ message BackendWorkflowState {
   uint64 generation = 4;
 }
 
+// ActivityInvocation wraps a TaskScheduled HistoryEvent with optional
+// propagated history for delivery to an activity actor.
+message ActivityInvocation {
+  HistoryEvent historyEvent = 1;
+
+  // Propagated history from the calling workflow.
+  optional PropagatedHistory propagatedHistory = 2;
+}
+
 message CreateWorkflowInstanceRequest {
   HistoryEvent startEvent = 1;
   reserved 2;
   reserved "policy";
+
+  // Propagated history from the parent workflow.
+  optional PropagatedHistory propagatedHistory = 3;
 }
 
 message WorkflowMetadata {

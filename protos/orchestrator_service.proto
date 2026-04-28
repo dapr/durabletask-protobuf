@@ -23,6 +23,11 @@ message ActivityRequest {
     int32 taskId = 5;
     TraceContext parentTraceContext = 6;
     string taskExecutionId = 7;
+
+    // Propagated history from the calling workflow.
+    // Delivered via the work item stream to the SDK, so that the
+    // activity function can access it via ctx.
+    optional PropagatedHistory propagatedHistory = 8;
 }
 
 message ActivityResponse {
@@ -41,6 +46,11 @@ message WorkflowRequest {
     reserved 5;
     bool requiresHistoryStreaming = 6;
     optional TaskRouter router = 7;
+
+    // Propagated history from a parent workflow.
+    // Delivered via the work item stream to the SDK, so that the
+    // workflow function can access it via ctx.
+    optional PropagatedHistory propagatedHistory = 8;
 }
 
 message WorkflowResponse {

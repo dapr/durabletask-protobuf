@@ -12,6 +12,35 @@ import "orchestration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
+// A contiguous range of events produced by a single app.
+// Used to track which app produced which events when history from
+// multiple workflows is flattened into a single PropagatedHistory.
+message PropagatedHistoryChunk {
+    string appId = 1;
+    // Index of the first event in this chunk (inclusive),
+    // into PropagatedHistory.events.
+    int32 startEventIndex = 2;
+    // Number of events in this chunk.
+    int32 eventCount = 3;
+    // The workflow instance ID/name that produced the events in this chunk.
+    string instanceId = 4;
+    string workflowName = 5;
+}
+
+message PropagatedHistory {
+    // The history events being propagated, copied from the parent's
+    // history at propagation time.
+    repeated HistoryEvent events = 1;
+    // The propagation scope that was used to produce this history.
+    HistoryPropagationScope scope = 2;
+    // Chunk boundaries identifying which app produced which events.
+    // Chunks are ordered & non-overlapping. Together they cover
+    // all events in the events field.
+    repeated PropagatedHistoryChunk chunks = 3;
+
+    // TODO: Add signing fields as a follow-up.
+}
+
 message ExecutionStartedEvent {
     string name = 1;
     google.protobuf.StringValue version = 2;
@@ -45,6 +74,11 @@ message TaskScheduledEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+
+    // History propagation scope used when this task was originally scheduled.
+    // Persisted on the event so rerun can re-issue the task with the same
+    // scope after the action has been discarded.
+    optional HistoryPropagationScope historyPropagationScope = 7;
 }
 
 message TaskCompletedEvent {
@@ -69,6 +103,11 @@ message ChildWorkflowInstanceCreatedEvent {
     // If defined, indicates that this task was the starting point of a new
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
+
+    // History propagation scope used when this child workflow was originally
+    // scheduled. Persisted on the event so rerun can re-issue the child with
+    // the same scope after the action has been discarded.
+    optional HistoryPropagationScope historyPropagationScope = 7;
 }
 
 message ChildWorkflowInstanceCompletedEvent {
