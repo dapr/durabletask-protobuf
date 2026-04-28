@@ -1,0 +1,40 @@
+/*
+Copyright 2026 The Dapr Authors
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+syntax = "proto3";
+
+option csharp_namespace = "Dapr.DurableTask.Protobuf";
+option java_package = "io.dapr.durabletask.implementation.protobuf";
+option go_package = "/api/protos";
+
+// InProcessWorkflow identifies a category of Dapr internal workflow.
+// Workflow name format: dapr.internal.<workflow>.<resource>.<method>
+//
+// SDKs map enum values to string prefixes:
+//   IN_PROCESS_WORKFLOW_MCP → "dapr.internal.mcp."
+enum InProcessWorkflow {
+    // MCP: Model Context Protocol server orchestrations.
+    // Prefix: "dapr.internal.mcp."
+    IN_PROCESS_WORKFLOW_MCP = 0;
+}
+
+// MCPMethod identifies an operation within the MCP internal workflow.
+// SDKs map enum values to PascalCase method suffixes:
+//   MCP_METHOD_LIST_TOOLS → ".ListTools"
+//   MCP_METHOD_CALL_TOOL  → ".CallTool"
+enum MCPMethod {
+    // Discovers available tools on an MCPServer.
+    MCP_METHOD_LIST_TOOLS = 0;
+    // Invokes a specific tool on an MCPServer.
+    MCP_METHOD_CALL_TOOL = 1;
+}
