@@ -22,9 +22,9 @@ message ExecutionStartedEvent {
     TraceContext parentTraceContext = 7;
     google.protobuf.StringValue workflowSpanID = 8;
     map<string, string> tags = 9;
-    // in_process is set by the sidecar at creation time when the workflow runs in-process.
+    // inProcess is set by the sidecar at creation time when the workflow runs in-process.
     // This means work items for this instance are routed within-process instead of the default gRPC work-item stream.
-    bool in_process = 10;
+    bool inProcess = 10;
 }
 
 message ExecutionCompletedEvent {
@@ -49,9 +49,9 @@ message TaskScheduledEvent {
     // workflow execution as the result of a rerun operation.
     optional RerunParentInstanceInfo rerunParentInstanceInfo = 6;
 
-    // in_process is propagated from the parent workflow's ExecutionStartedEvent.in_process.
+    // inProcess is propagated from the parent workflow's ExecutionStartedEvent.inProcess.
     // This means the activity worker can route within-process instead of the default gRPC work-item stream.
-    bool in_process = 7;
+    bool inProcess = 7;
 }
 
 message TaskCompletedEvent {

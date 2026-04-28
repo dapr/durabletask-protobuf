@@ -19,8 +19,8 @@ message ScheduleTaskAction {
     google.protobuf.StringValue input = 3;
     optional TaskRouter router = 4;
     string taskExecutionId = 5;
-    // in_process is set by the sidecar when the activity should run in-process.
-    bool in_process = 6;
+    // inProcess is set by the sidecar when the activity should run in-process.
+    bool inProcess = 6;
 }
 
 message CreateChildWorkflowAction {
@@ -29,8 +29,8 @@ message CreateChildWorkflowAction {
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
     optional TaskRouter router = 5;
-    // in_process is set by the sidecar at creation time when the workflow runs in-process.
-    bool in_process = 6;
+    // inProcess is set by the sidecar at creation time when the workflow runs in-process.
+    bool inProcess = 6;
 }
 
 message CreateTimerAction {
