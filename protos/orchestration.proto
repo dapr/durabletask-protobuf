@@ -30,7 +30,7 @@ enum OrchestrationStatus {
 message TaskRouter {
     string sourceAppID = 1;
     optional string targetAppID = 2;
-    optional string targetNamespace = 3;
+    optional string targetAppNamespace = 3;
 }
 
 message WorkflowVersion {
@@ -59,7 +59,7 @@ message ParentInstanceInfo {
     google.protobuf.StringValue version = 3;
     WorkflowInstance workflowInstance = 4;
     optional string appID = 5;
-    optional string namespace = 6;
+    optional string appNamespace = 6;
 }
 
 // RerunParentInstanceInfo is used to indicate that this workflow was
