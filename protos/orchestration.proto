@@ -13,6 +13,7 @@ import "google/protobuf/wrappers.proto";
 enum StalledReason {
     PATCH_MISMATCH = 0;
     VERSION_NOT_AVAILABLE = 1;
+    PAYLOAD_SIZE_EXCEEDED = 2;
 }
 
 enum OrchestrationStatus {
