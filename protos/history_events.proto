@@ -164,6 +164,16 @@ message ChildWorkflowInstanceFailedEvent {
     optional bytes signerCertificate = 4;
 }
 
+// NewWorkflowScheduledEvent records that a running workflow scheduled a new,
+// detached workflow instance via ScheduleNewWorkflowAction. The new workflow
+// has no parent linkage (no completion or failure flows back), so this event
+// only stores a pointer to the spawned instance — the inputs themselves are
+// consumed directly from the action when scheduling. Replay matches on
+// instanceId, so it is the same value the action carried.
+message NewWorkflowScheduledEvent {
+    string instanceId = 1;
+}
+
 // Indicates the timer was created by a createTimer call with no special origin.
 message TimerOriginCreateTimer {}
 
@@ -266,6 +276,7 @@ message HistoryEvent {
         ExecutionSuspendedEvent executionSuspended = 21;
         ExecutionResumedEvent executionResumed = 22;
         ExecutionStalledEvent executionStalled = 31;
+        NewWorkflowScheduledEvent newWorkflowScheduled = 32;
     }
     reserved 18, 19, 23, 24, 25, 26, 27, 28, 29;
     optional TaskRouter router = 30;
