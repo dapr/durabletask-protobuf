@@ -35,18 +35,19 @@ message CreateChildWorkflowAction {
     optional HistoryPropagationScope historyPropagationScope = 6;
 }
 
-// ScheduleNewWorkflowAction schedules a new, detached workflow instance from a
-// running workflow. Mirrors the fields of CreateInstanceRequest (the client
+// CreateDetachedWorkflowAction creates a new, detached workflow instance from
+// a running workflow. Mirrors the fields of CreateInstanceRequest (the client
 // scheduling API) so the runtime has all the information needed to schedule
 // the new instance directly from this action. The spawned workflow is fully
 // decoupled from the caller: no parent pointer is recorded on the new
 // workflow, no completion is awaited, and no failure propagation flows back.
-// The spawn is recorded once in the caller's history as a
-// NewWorkflowScheduledEvent referencing the new instance ID.
-message ScheduleNewWorkflowAction {
+// The creation is recorded once in the caller's history as a
+// DetachedWorkflowInstanceCreatedEvent referencing the new instance ID.
+message CreateDetachedWorkflowAction {
     // instanceId is the ID assigned to the new workflow. It is mandatory:
     // implementors must set a stable, deterministic ID so that on replay the
-    // call resolves to the same NewWorkflowScheduledEvent in history.
+    // call resolves to the same DetachedWorkflowInstanceCreatedEvent in
+    // history.
     string instanceId = 1;
     // name of the workflow to schedule. Mandatory.
     string name = 2;
@@ -110,7 +111,7 @@ message WorkflowAction {
         CompleteWorkflowAction completeWorkflow = 6;
         TerminateWorkflowAction terminateWorkflow = 7;
         WorkflowVersionNotAvailableAction workflowVersionNotAvailable = 10;
-        ScheduleNewWorkflowAction scheduleNewWorkflow = 11;
+        CreateDetachedWorkflowAction createDetachedWorkflow = 11;
     }
     reserved 8;
     optional TaskRouter router = 9;
