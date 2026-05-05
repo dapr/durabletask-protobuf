@@ -13,35 +13,6 @@ import "attestation.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-// A contiguous range of events produced by a single app.
-// Used to track which app produced which events when history from
-// multiple workflows is flattened into a single PropagatedHistory.
-message PropagatedHistoryChunk {
-    string appId = 1;
-    // Index of the first event in this chunk (inclusive),
-    // into PropagatedHistory.events.
-    int32 startEventIndex = 2;
-    // Number of events in this chunk.
-    int32 eventCount = 3;
-    // The workflow instance ID/name that produced the events in this chunk.
-    string instanceId = 4;
-    string workflowName = 5;
-}
-
-message PropagatedHistory {
-    // The history events being propagated, copied from the parent's
-    // history at propagation time.
-    repeated HistoryEvent events = 1;
-    // The propagation scope that was used to produce this history.
-    HistoryPropagationScope scope = 2;
-    // Chunk boundaries identifying which app produced which events.
-    // Chunks are ordered & non-overlapping. Together they cover
-    // all events in the events field.
-    repeated PropagatedHistoryChunk chunks = 3;
-
-    // TODO: Add signing fields as a follow-up.
-}
-
 message ExecutionStartedEvent {
     string name = 1;
     google.protobuf.StringValue version = 2;
@@ -269,4 +240,54 @@ message HistoryEvent {
     }
     reserved 18, 19, 23, 24, 25, 26, 27, 28, 29;
     optional TaskRouter router = 30;
+}
+
+// A self-contained range of events produced by a single app, used when
+// history from multiple workflows is propagated to a downstream workflow
+// or activity. Each chunk owns the raw event bytes its producer signed;
+// receivers digest those bytes directly and decode them into typed
+// HistoryEvents on demand.
+message PropagatedHistoryChunk {
+    // Raw deterministic bytes of each HistoryEvent in this chunk, in execution
+    // order. The producer marshals each event once and signs over these exact
+    // bytes; receivers digest them directly and never re-marshal, so chunk
+    // verification is independent of protobuf marshaler-version stability
+    // across producer and receiver. This mirrors the approach attestations use
+    // for ioDigest: signed bytes travel verbatim end-to-end. The chunk's
+    // length is len(rawEvents).
+    repeated bytes rawEvents = 1;
+
+    string appId = 2;
+
+    // The workflow instance ID/name that produced the events in this chunk.
+    string instanceId = 3;
+    string workflowName = 4;
+
+    // Raw deterministic bytes of each HistorySignature message produced by the
+    // chunk's app at dispatch time, covering rawEvents in order. Receivers
+    // unmarshal these on demand to verify the chain. Raw bytes are required
+    // because HistorySignature.previousSignatureDigest commits to the exact
+    // persisted serialization; re-marshaling on the wire would break chain
+    // linkage. See backend_service.proto: HistorySignature.
+    repeated bytes rawSignatures = 5;
+
+    // X.509 certificate chains of the chunk app's signing identities,
+    // DER-concatenated leaf-first then intermediates (same encoding as
+    // backend_service.proto: SigningCertificate.certificate). Each
+    // HistorySignature in rawSignatures has a certificateIndex that indexes
+    // into this list, scoped to the chunk's producer app. Raw bytes here avoid
+    // a circular import on backend_service.proto's SigningCertificate type.
+    repeated bytes signingCertChains = 6;
+}
+
+message PropagatedHistory {
+    // The propagation scope that was used to produce this history.
+    HistoryPropagationScope scope = 1;
+
+    // Per-app history chunks. Each chunk owns the raw event bytes its producer
+    // signed (PropagatedHistoryChunk.rawEvents); receivers digest those bytes
+    // directly and decode them into typed HistoryEvents on demand. Chunks are
+    // ordered, non-overlapping, and together describe the full propagated
+    // event sequence.
+    repeated PropagatedHistoryChunk chunks = 2;
 }
