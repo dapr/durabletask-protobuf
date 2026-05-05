@@ -26,6 +26,25 @@ message PropagatedHistoryChunk {
     // The workflow instance ID/name that produced the events in this chunk.
     string instanceId = 4;
     string workflowName = 5;
+
+    // Raw deterministic bytes of each HistorySignature message produced
+    // by the chunk's app at dispatch time, covering exactly the events
+    // in [startEventIndex : startEventIndex+eventCount]. Receivers
+    // unmarshal these on demand to verify the chain. Raw bytes are
+    // required because HistorySignature.previousSignatureDigest commits
+    // to the exact persisted serialization; re-marshaling on the wire
+    // would break chain linkage. See backend_service.proto:
+    // HistorySignature.
+    repeated bytes rawSignatures = 6;
+
+    // X.509 certificate chains of the chunk app's signing identities,
+    // DER-concatenated leaf-first then intermediates (same encoding as
+    // backend_service.proto: SigningCertificate.certificate). Each
+    // HistorySignature in rawSignatures has a certificateIndex that
+    // indexes into this list, scoped to the chunk's producer app. Raw
+    // bytes here avoid a circular import on backend_service.proto's
+    // SigningCertificate type.
+    repeated bytes signingCertChains = 7;
 }
 
 message PropagatedHistory {
@@ -35,11 +54,11 @@ message PropagatedHistory {
     // The propagation scope that was used to produce this history.
     HistoryPropagationScope scope = 2;
     // Chunk boundaries identifying which app produced which events.
-    // Chunks are ordered & non-overlapping. Together they cover
-    // all events in the events field.
+    // Chunks are ordered & non-overlapping. Together they cover all
+    // events in the events field. Each chunk also carries the producer
+    // app's signatures and cert chains for its event range, so receivers
+    // can cryptographically verify chunks independently.
     repeated PropagatedHistoryChunk chunks = 3;
-
-    // TODO: Add signing fields as a follow-up.
 }
 
 message ExecutionStartedEvent {
