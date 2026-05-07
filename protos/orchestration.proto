@@ -109,4 +109,7 @@ message WorkflowState {
     google.protobuf.Timestamp completedTimestamp = 13;
     google.protobuf.StringValue parentInstanceId = 14;
     map<string, string> tags = 15;
+    google.protobuf.StringValue parentAppId = 16;
+    optional google.protobuf.Timestamp startedAt = 17;
+
 }
