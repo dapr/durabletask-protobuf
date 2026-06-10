@@ -17,7 +17,9 @@ message ScheduleTaskAction {
     string name = 1;
     google.protobuf.StringValue version = 2;
     google.protobuf.StringValue input = 3;
-    optional TaskRouter router = 4;
+    // Field 4 was a TaskRouter that was never read by the runtime. Routing
+    // is carried by the enclosing WorkflowAction.router instead.
+    reserved 4;
     string taskExecutionId = 5;
 
     // History propagation scope. Absent/SCOPE_NONE = no propagation.
@@ -29,7 +31,9 @@ message CreateChildWorkflowAction {
     string name = 2;
     google.protobuf.StringValue version = 3;
     google.protobuf.StringValue input = 4;
-    optional TaskRouter router = 5;
+    // Field 5 was a TaskRouter that was never read by the runtime. Routing
+    // is carried by the enclosing WorkflowAction.router instead.
+    reserved 5;
 
     // History propagation scope. Absent/SCOPE_NONE = no propagation.
     optional HistoryPropagationScope historyPropagationScope = 6;
@@ -61,7 +65,6 @@ message CreateDetachedWorkflowAction {
     google.protobuf.StringValue executionId = 6;
     map<string, string> tags = 7;
     optional TraceContext parentTraceContext = 8;
-    optional TaskRouter router = 9;
 }
 
 message CreateTimerAction {
