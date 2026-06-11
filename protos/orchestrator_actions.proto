@@ -65,6 +65,10 @@ message CreateDetachedWorkflowAction {
     google.protobuf.StringValue executionId = 6;
     map<string, string> tags = 7;
     optional TraceContext parentTraceContext = 8;
+
+    // Field 9 was a TaskRouter that was never read by the runtime. Routing
+    // is carried by the enclosing WorkflowAction.router instead.
+    reserved 9;
 }
 
 message CreateTimerAction {
