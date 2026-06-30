@@ -210,9 +210,10 @@ enum WorkerCapability {
     // service can send only the new events (the delta) instead of the full
     // history each turn. When the service has dispatched a turn for an
     // instance to this stream and believes the stream is still warm for it, it
-    // may set WorkflowRequest.cachedHistory and omit pastEvents. On a cache
-    // miss the worker recovers the full history via the GetInstanceHistory
-    // RPC, so the optimization never affects correctness.
+    // may set WorkflowRequest.cachedHistory and drop the committed-history
+    // prefix the worker already holds from pastEvents, leaving only the delta
+    // there. On a cache miss the worker recovers the full history via the
+    // GetInstanceHistory RPC, so the optimization never affects correctness.
     WORKER_CAPABILITY_STATEFUL_HISTORY = 2;
 }
 
