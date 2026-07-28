@@ -105,10 +105,18 @@ message CreateInstanceRequest {
     map<string, string> tags = 8;
     TraceContext parentTraceContext = 9;
 
+
     // When true, the request fails with an ALREADY_EXISTS error if a workflow
     // instance with the same instanceId already exists, whether active or
     // completed. When false, an existing completed instance is restarted.
     bool enforceUniqueInstanceId = 10;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. When targetAppID names a different app, the operation is
+    // executed against that app's instance (same namespace unless
+    // targetAppNamespace is set). sourceAppID is stamped by the sidecar, not
+    // the client.
+    optional TaskRouter router = 11;
 }
 
 message CreateInstanceResponse {
@@ -118,6 +126,10 @@ message CreateInstanceResponse {
 message GetInstanceRequest {
     string instanceId = 1;
     bool getInputsAndOutputs = 2;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. sourceAppID is stamped by the sidecar, not the client.
+    optional TaskRouter router = 3;
 }
 
 message GetInstanceResponse {
@@ -129,6 +141,10 @@ message RaiseEventRequest {
     string instanceId = 1;
     string name = 2;
     google.protobuf.StringValue input = 3;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. sourceAppID is stamped by the sidecar, not the client.
+    optional TaskRouter router = 4;
 }
 
 message RaiseEventResponse {
@@ -139,6 +155,10 @@ message TerminateRequest {
     string instanceId = 1;
     google.protobuf.StringValue output = 2;
     bool recursive = 3;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. sourceAppID is stamped by the sidecar, not the client.
+    optional TaskRouter router = 4;
 }
 
 message TerminateResponse {
@@ -148,6 +168,10 @@ message TerminateResponse {
 message SuspendRequest {
     string instanceId = 1;
     google.protobuf.StringValue reason = 2;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. sourceAppID is stamped by the sidecar, not the client.
+    optional TaskRouter router = 3;
 }
 
 message SuspendResponse {
@@ -157,6 +181,10 @@ message SuspendResponse {
 message ResumeRequest {
     string instanceId = 1;
     google.protobuf.StringValue reason = 2;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. sourceAppID is stamped by the sidecar, not the client.
+    optional TaskRouter router = 3;
 }
 
 message ResumeResponse {
@@ -180,6 +208,12 @@ message PurgeInstancesRequest {
     // absolutely necessary.
     // Defaults to false.
     optional bool force = 4;
+
+    // router optionally routes this operation to the workflow instance owned
+    // by another app. Cross-app purges are delegated to the target app in
+    // full, so they are always recursive on the remote side. sourceAppID is
+    // stamped by the sidecar, not the client.
+    optional TaskRouter router = 5;
 }
 
 message PurgeInstanceFilter {
@@ -263,6 +297,10 @@ message RerunWorkflowFromEventRequest {
   // rerunning from a child workflow. Only accepted if the event ID given is
   // targeting a child workflow creation event.
   optional string newChildWorkflowInstanceID = 6;
+
+  // router optionally routes this operation to the workflow instance owned
+  // by another app. sourceAppID is stamped by the sidecar, not the client.
+  optional TaskRouter router = 7;
 }
 
 // RerunWorkflowFromEventResponse is the response to executing
