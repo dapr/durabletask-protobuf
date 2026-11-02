@@ -23,13 +23,17 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 // WorkflowSchedule starts a workflow on a cron schedule. Each run is a new,
-// detached workflow instance with the ID `{name}_{fire time}`, where the fire
-// time is formatted as `20060102T150405Z` (UTC). A run started by
-// TriggerWorkflowSchedule has the ID `{name}_{trigger time}_manual`. So the
-// runs of a schedule are the instances whose ID starts with `{name}_`.
+// detached workflow instance with the ID `{name}_{owner}_{fire time}`. The
+// owner is the first 6 hex characters of the SHA-256 of `{namespace}/{app ID}`
+// of the app that owns the schedule, so that same-named schedules of two apps
+// that target one app do not share run IDs. The fire time is formatted as
+// `20060102T150405Z` (UTC). A run started by TriggerWorkflowSchedule has the
+// ID `{name}_{owner}_{trigger time}_manual`, where the trigger time has
+// milliseconds: `20060102T150405000Z`. So the runs of a schedule are the
+// instances whose ID starts with `{name}_{owner}_`.
 message WorkflowSchedule {
     // name identifies the schedule within the app. It may contain only
-    // letters, digits and '-', and is at most 40 characters long.
+    // letters, digits and '-', and is at most 30 characters long.
     string name = 1;
 
     // workflowName is the name of the workflow each run starts.
@@ -171,7 +175,7 @@ message TriggerWorkflowScheduleRequest {
 
 message TriggerWorkflowScheduleResponse {
     // instanceId is the ID of the run the trigger starts. Triggers within the
-    // same second get the same ID, so they start one run. A triggered run
+    // same millisecond get the same ID, so they start one run. A triggered run
     // counts towards repeats.
     string instanceId = 1;
 }
