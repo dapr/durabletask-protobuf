@@ -23,6 +23,10 @@ message ExecutionStartedEvent {
     TraceContext parentTraceContext = 7;
     google.protobuf.StringValue workflowSpanID = 8;
     map<string, string> tags = 9;
+
+    // ordering is the CreateInstanceRequest.ordering the instance was created
+    // with, carried to every ContinueAsNew generation.
+    optional WorkflowOrdering ordering = 10;
 }
 
 message ExecutionCompletedEvent {
