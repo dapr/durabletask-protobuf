@@ -118,6 +118,10 @@ message CreateInstanceRequest {
     // targetAppNamespace is set). sourceAppID is stamped by the sidecar, not
     // the client.
     optional TaskRouter router = 11;
+
+    // ordering, when set, runs the instance in FIFO order with the other
+    // instances of its key. Unset means unordered.
+    optional WorkflowOrdering ordering = 12;
 }
 
 message CreateInstanceResponse {
