@@ -143,6 +143,27 @@ message BackendWorkflowStateMetadata {
   // cleared on instance purge. Subject to the same maxStateEntries
   // tampering bound.
   uint64 externalSigningCertificateLength = 6;
+
+  // ordering is the instance's place in its ordering key's queue. Unset for
+  // an instance created without an ordering key.
+  optional BackendWorkflowOrderingMetadata ordering = 7;
+}
+
+// BackendWorkflowOrderingMetadata tracks a keyed instance in its ordering
+// key's queue.
+message BackendWorkflowOrderingMetadata {
+  // createExecutionId is the executionId of the ExecutionStartedEvent the
+  // instance was created with. It identifies the instance in the queue, and
+  // is kept across ContinueAsNew, which gives each generation a new
+  // executionId.
+  string createExecutionId = 1;
+
+  // released is set once the ordering key let the instance run.
+  optional bool released = 2;
+
+  // done is set once the ordering key acknowledged that the completed
+  // instance no longer holds it.
+  optional bool done = 3;
 }
 
 // A signing identity's X.509 certificate, stored once and referenced by index
