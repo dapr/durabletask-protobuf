@@ -122,6 +122,9 @@ message CreateInstanceRequest {
     // ordering, when set, runs the instance in FIFO order with the other
     // instances of its key. Unset means unordered.
     optional WorkflowOrdering ordering = 12;
+
+    // priority is the caller's priority. Host configuration may override it.
+    optional Priority priority = 13;
 }
 
 message CreateInstanceResponse {

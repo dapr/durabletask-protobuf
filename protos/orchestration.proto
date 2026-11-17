@@ -58,6 +58,14 @@ enum OrderingFailurePolicy {
     ORDERING_FAILURE_POLICY_CANCEL = 2;
 }
 
+// Priority orders a workflow's work against other waiting work.
+message Priority {
+    // priorityLevel is a level name, such as critical or low.
+    optional string priorityLevel = 1;
+    // fairnessWeight is 1 to 1000.
+    optional uint32 fairnessWeight = 2;
+}
+
 message TaskRouter {
     string sourceAppID = 1;
     optional string targetAppID = 2;
