@@ -8,8 +8,7 @@ the protobuf contracts in this repo via [Git submodules](https://git-scm.com/boo
 These repos include the protos as a Git submodule at `submodules/durabletask-protobuf`:
 
 - [https://github.com/dapr/durabletask-go](https://github.com/dapr/durabletask-go)
-- [https://github.com/dapr/durabletask-js](https://github.com/dapr/durabletask-js) (its submodule currently points at
-  [https://github.com/microsoft/durabletask-protobuf](https://github.com/microsoft/durabletask-protobuf))
+- [https://github.com/dapr/durabletask-js](https://github.com/dapr/durabletask-js)
 
 Tagged versions are published on the [releases page](https://github.com/dapr/durabletask-protobuf/releases).
 
