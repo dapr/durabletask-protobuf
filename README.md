@@ -1,8 +1,17 @@
 # Durable Task Protobuf Definitions
 
-This repo contains [protocol buffer](https://developers.google.com/protocol-buffers) (protobuf) definitions
-used by the Durable Task framework sidecar architecture. It's recommended that Durable Task language SDKs reference
+This repo contains the [protocol buffer](https://developers.google.com/protocol-buffers) (protobuf) definitions
+behind the durable task engine of [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/workflow-overview/):
+the contract between the Dapr sidecar and the durable task SDKs. It's recommended that Durable Task language SDKs reference
 the protobuf contracts in this repo via [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
+
+These repos include the protos as a Git submodule at `submodules/durabletask-protobuf`:
+
+- [https://github.com/dapr/durabletask-go](https://github.com/dapr/durabletask-go)
+- [https://github.com/dapr/durabletask-js](https://github.com/dapr/durabletask-js) (its submodule currently points at
+  [https://github.com/microsoft/durabletask-protobuf](https://github.com/microsoft/durabletask-protobuf))
+
+Tagged versions are published on the [releases page](https://github.com/dapr/durabletask-protobuf/releases).
 
 ## Contributing
 
