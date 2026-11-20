@@ -58,10 +58,20 @@ enum OrderingFailurePolicy {
     ORDERING_FAILURE_POLICY_CANCEL = 2;
 }
 
+// PriorityLevel ranks a workflow's work against other waiting work. A higher
+// value is served first. Unspecified is the same as unset: the host picks.
+enum PriorityLevel {
+    PRIORITY_LEVEL_UNSPECIFIED = 0;
+    PRIORITY_LEVEL_BACKGROUND = 1;
+    PRIORITY_LEVEL_LOW = 2;
+    PRIORITY_LEVEL_NORMAL = 3;
+    PRIORITY_LEVEL_HIGH = 4;
+    PRIORITY_LEVEL_CRITICAL = 5;
+}
+
 // Priority orders a workflow's work against other waiting work.
 message Priority {
-    // priorityLevel is a level name, such as critical or low.
-    optional string priorityLevel = 1;
+    optional PriorityLevel priorityLevel = 1;
     // fairnessWeight is 1 to 1000.
     optional uint32 fairnessWeight = 2;
 }
