@@ -27,6 +27,9 @@ message ExecutionStartedEvent {
     // ordering is the CreateInstanceRequest.ordering the instance was created
     // with, carried to every ContinueAsNew generation.
     optional WorkflowOrdering ordering = 10;
+
+    // priority is what the instance was started with, kept across ContinueAsNew.
+    optional Priority priority = 11;
 }
 
 message ExecutionCompletedEvent {
