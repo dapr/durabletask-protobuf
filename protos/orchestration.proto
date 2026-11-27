@@ -157,6 +157,12 @@ enum HistoryPropagationScope {
     // chain. Any propagated history this workflow received from its
     // parent is forwarded to the child.
     HISTORY_PROPAGATION_SCOPE_LINEAGE = 2;
+    // Propagate only the caller's ExecutionStarted event: its name, input,
+    // instance and tags, without the events that followed it or any
+    // ancestral history. Use it when the child needs to know which run
+    // called it but not what that run has done. An engine that predates
+    // this value sends OWN_HISTORY instead.
+    HISTORY_PROPAGATION_SCOPE_START_EVENT_ONLY = 3;
 }
 
 message WorkflowState {
