@@ -125,6 +125,52 @@ message WorkflowMetadata {
   optional google.protobuf.Timestamp startedAt = 14;
 }
 
+// BackendWorkflowSummary is the resolved view of a workflow instance. The
+// sidecar derives it from the stored history and inbox when it saves the
+// instance, and keeps it in BackendWorkflowStateMetadata.summary. A list
+// operation can then filter instances without a read of each history.
+message BackendWorkflowSummary {
+  // name is the workflow name from the ExecutionStarted event.
+  string name = 1;
+
+  // runtimeStatus is the runtime status of the instance after the saved
+  // events.
+  OrchestrationStatus runtimeStatus = 2;
+
+  // createdAt is the timestamp of the ExecutionStarted event. While the
+  // instance is PENDING, this event is in the inbox.
+  google.protobuf.Timestamp createdAt = 3;
+
+  // startedAt is the timestamp of the first history event. Unset while the
+  // instance is PENDING.
+  optional google.protobuf.Timestamp startedAt = 4;
+
+  // lastUpdatedAt is the timestamp of the last history event. Equal to
+  // createdAt when the history is empty.
+  google.protobuf.Timestamp lastUpdatedAt = 5;
+
+  // completedAt is the timestamp of the ExecutionCompleted event. Unset
+  // until the instance reaches a terminal status.
+  optional google.protobuf.Timestamp completedAt = 6;
+
+  // version is the workflow version from the first WorkflowStarted event in
+  // the history, when that event has one.
+  optional string version = 7;
+
+  // parentInstanceId is the instance ID of the parent workflow, from the
+  // ExecutionStarted event. Empty for a top-level instance.
+  string parentInstanceId = 8;
+
+  // parentAppId is the app ID of the parent workflow, from the
+  // ExecutionStarted event. Unset when the event does not name one.
+  optional string parentAppId = 9;
+
+  // suspended is true when the last ExecutionSuspended or ExecutionResumed
+  // event in the history is an ExecutionSuspended event. The sidecar keeps it
+  // so that it can update the summary from the new events only.
+  bool suspended = 10;
+}
+
 message BackendWorkflowStateMetadata {
   uint64 inboxLength = 1;
   uint64 historyLength = 2;
@@ -147,6 +193,11 @@ message BackendWorkflowStateMetadata {
   // ordering is the instance's place in its ordering key's queue. Unset for
   // an instance created without an ordering key.
   optional BackendWorkflowOrderingMetadata ordering = 7;
+
+  // summary is the resolved view of the instance at the last save. Unset on
+  // rows that a sidecar without BackendWorkflowSummary wrote. A reader must
+  // then derive the view from the history and inbox.
+  optional BackendWorkflowSummary summary = 8;
 }
 
 // BackendWorkflowOrderingMetadata tracks a keyed instance in its ordering

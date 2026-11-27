@@ -15,6 +15,7 @@ import "workflow_schedule.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
 
 message ActivityRequest {
     string name = 1;
@@ -380,6 +381,129 @@ message ListInstanceIDsResponse {
   optional string continuationToken = 2;
 }
 
+// ListInstancesFilter selects the workflow instances that ListInstances
+// returns. An instance matches when it matches all the fields that are set.
+// An unset or empty field matches all instances. Each time range includes
+// its "from" time and excludes its "to" time. Fields 1-3 use the same
+// numbers as PurgeInstanceFilter.
+//
+// The duration of an instance is its completedTimestamp minus its
+// createdTimestamp. For an instance that has not completed, it is the
+// current time of the server minus its createdTimestamp. After
+// ContinueAsNew, the duration counts from the createdTimestamp of the
+// current generation.
+message ListInstancesFilter {
+    // createdTimeFrom, when set, matches the instances whose createdTimestamp
+    // is at or after this time.
+    google.protobuf.Timestamp createdTimeFrom = 1;
+
+    // createdTimeTo, when set, matches the instances whose createdTimestamp
+    // is before this time.
+    google.protobuf.Timestamp createdTimeTo = 2;
+
+    // runtimeStatus, when not empty, matches the instances whose runtime
+    // status is one of these values.
+    repeated OrchestrationStatus runtimeStatus = 3;
+
+    // completedTimeFrom, when set, matches the instances whose
+    // completedTimestamp is at or after this time. An instance without
+    // completedTimestamp does not match.
+    google.protobuf.Timestamp completedTimeFrom = 4;
+
+    // completedTimeTo, when set, matches the instances whose
+    // completedTimestamp is before this time. An instance without
+    // completedTimestamp does not match.
+    google.protobuf.Timestamp completedTimeTo = 5;
+
+    // minDuration, when set, matches the instances whose duration is at
+    // least this value.
+    google.protobuf.Duration minDuration = 6;
+
+    // maxDuration, when set, matches the instances whose duration is less
+    // than this value.
+    google.protobuf.Duration maxDuration = 7;
+}
+
+// ListInstancesRequest is used to list workflow instances with their
+// summaries. The server applies the filter, so the client does not fetch
+// each instance.
+//
+// ListInstances reads every workflow instance of the app from the state
+// store, then filters. The cost grows with the number of stored instances.
+// Use it for periodic reports, not for frequent polling.
+message ListInstancesRequest {
+    // continuationToken is the token from the previous ListInstancesResponse.
+    // If not given, the first page is returned. The token is opaque. Tokens
+    // from ListInstances and ListInstanceIDs are not interchangeable.
+    optional string continuationToken = 1;
+
+    // pageSize is the maximum number of instances to return for this page. If
+    // not given, the server uses its default. The server can use a smaller
+    // maximum.
+    optional uint32 pageSize = 2;
+
+    // instanceIdPrefix, when set, returns only the instances whose ID starts
+    // with it.
+    optional string instanceIdPrefix = 3;
+
+    // filter, when set, returns only the instances that match it.
+    ListInstancesFilter filter = 4;
+}
+
+// WorkflowInstanceSummary is the summary of one workflow instance. Its fields
+// have the same values as the fields of the same name in WorkflowState.
+// runtimeStatus is WorkflowState.workflowStatus. It has no inputs, outputs,
+// custom status or failure details.
+message WorkflowInstanceSummary {
+    // instanceId is the ID of the workflow instance.
+    string instanceId = 1;
+
+    // name is the name of the workflow.
+    string name = 2;
+
+    // runtimeStatus is the runtime status of the instance.
+    OrchestrationStatus runtimeStatus = 3;
+
+    // createdTimestamp is the timestamp of the ExecutionStarted event.
+    // ContinueAsNew starts a new generation with a new createdTimestamp.
+    google.protobuf.Timestamp createdTimestamp = 4;
+
+    // startedAt is the timestamp of the first history event. Unset while the
+    // instance is PENDING.
+    optional google.protobuf.Timestamp startedAt = 5;
+
+    // lastUpdatedTimestamp is the timestamp of the last history event. Equal
+    // to createdTimestamp when the history is empty.
+    google.protobuf.Timestamp lastUpdatedTimestamp = 6;
+
+    // completedTimestamp is the timestamp of the ExecutionCompleted event.
+    // Unset until the instance reaches a terminal status.
+    optional google.protobuf.Timestamp completedTimestamp = 7;
+
+    // version is the workflow version, when the instance has one.
+    optional string version = 8;
+
+    // parentInstanceId is the instance ID of the parent workflow. Empty for a
+    // top-level instance.
+    string parentInstanceId = 9;
+
+    // parentAppId is the app ID of the parent workflow, when known.
+    optional string parentAppId = 10;
+}
+
+// ListInstancesResponse is the response to executing ListInstances.
+message ListInstancesResponse {
+    // instances is the list of matching instances in this page. The order of
+    // the instances is not defined.
+    repeated WorkflowInstanceSummary instances = 1;
+
+    // continuationToken is the token to use for the next page. If there are
+    // no more pages, this will be null. A page can have fewer than pageSize
+    // instances, or no instances, while the token is not null. To list all
+    // matching instances, call again until the token is null.
+    optional string continuationToken = 2;
+}
+
 // GetInstanceHistoryRequest is used to get the full history of a
 // workflow instance.
 message GetInstanceHistoryRequest {
@@ -436,6 +560,13 @@ service TaskHubSidecarService {
     rpc RerunWorkflowFromEvent(RerunWorkflowFromEventRequest) returns (RerunWorkflowFromEventResponse);
 
     rpc ListInstanceIDs (ListInstanceIDsRequest) returns (ListInstanceIDsResponse);
+
+    // Lists workflow instances with their summaries, filtered by the server.
+    // Reads every workflow instance of the app from the state store, then
+    // filters. The cost grows with the number of stored instances. Use it for
+    // periodic reports, not for frequent polling.
+    rpc ListInstances (ListInstancesRequest) returns (ListInstancesResponse);
+
     rpc GetInstanceHistory (GetInstanceHistoryRequest) returns (GetInstanceHistoryResponse);
 
     // Workflow schedules start a workflow on a cron schedule. See
